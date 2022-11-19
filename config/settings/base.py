@@ -40,6 +40,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -49,7 +50,9 @@ INSTALLED_APPS = [
     # Third Party
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "channels",
     "djangochannelsrestframework",
+    "django_channels_jwt_auth_middleware",
     "django_filters",
     "corsheaders",
     # Own Apps,
@@ -89,9 +92,12 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
