@@ -30,3 +30,13 @@ def write_scanning_state(path, scanning_state):
     json_data = _read_json(path)
     json_data["scanning_state"] = scanning_state
     _write_json(path, json_data)
+
+
+def read_unprovisioned(path):
+    return _read_json(path)["unprovisend_devices"]
+
+
+def write_unprovisioned(path, unprovisioned):
+    json_data = _read_json(path)
+    json_data["unprovisioned"] = unprovisioned
+    _write_json(path, json_data)
