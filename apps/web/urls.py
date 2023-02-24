@@ -13,7 +13,7 @@ user_detail = UsersViewSet.as_view({"get": "retrieve"})
 
 urlpatterns = format_suffix_patterns(
     [
-        path("api/", api_root),
+        path("api/", api_root, name="api-root"),
         path("api/users/", user_list, name="user-list"),
         path("api/users/<int:pk>/", user_detail, name="user-detail"),
         path(

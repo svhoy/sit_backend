@@ -1,3 +1,4 @@
+# Standard Library
 import json
 
 
@@ -40,3 +41,18 @@ def write_unprovisioned(path, unprovisioned):
     json_data = _read_json(path)
     json_data["unprovisioned"] = unprovisioned
     _write_json(path, json_data)
+
+
+def write_prov(path, state, device):
+    json_data = _read_json(path)
+    json_data["prov_state"] = state
+    json_data["prov_uuid"] = device
+    _write_json(path, json_data)
+
+
+def read_prov_state(path):
+    return _read_json(path)["prov_state"]
+
+
+def read_prov_device(path):
+    return _read_json(path)["prov_uuid"]

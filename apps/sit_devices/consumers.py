@@ -5,14 +5,17 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from .utils import (
+    read_prov_device,
+    read_prov_state,
     read_scanning_state,
     write_scanning_state,
     read_unprovisioned,
     write_unprovisioned,
+    write_prov,
 )
 
 
-class BleScanConsumer(AsyncWebsocketConsumer):
+class BleDeviceConsumer(AsyncWebsocketConsumer):
     PATH = "apps/sit_devices/data_cache/scan_cache.json"
 
     async def connect(self):
@@ -37,7 +40,11 @@ class BleScanConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         write_unprovisioned(self.PATH, {})
-        write_scanning_state(self.PATH, False)
+        if read_scanning_state:
+            write_scanning_state(self.PATH, False)
+            await self.send_scanning_update(
+                "Device disconnected, Scanning aborted", None
+            )
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -50,12 +57,12 @@ class BleScanConsumer(AsyncWebsocketConsumer):
             await self.send_scanning_update(
                 data["scan"]["message"], data["scan"]["unprovisioned"]
             )
-            test = get_channel_layer()
-            await test.group_send(
-                "provisioning",
+        elif "prov" in data and data["prov"]["state"] is True:
+            write_prov(self.PATH, True, data["prov"]["uuid"])
+            await self.channel_layer.group_send(
+                self.room_group_name,
                 {
                     "type": "prov_update",
-                    "unprovisioned": data["scan"]["unprovisioned"],
                 },
             )
 
@@ -85,54 +92,14 @@ class BleScanConsumer(AsyncWebsocketConsumer):
             )
         )
 
-
-class BleProvisioning(AsyncWebsocketConsumer):
-    PATH = "apps/sit_devices/data_cache/scan_cache.json"
-
-    async def connect(self):
-        self.room_group_name = "provisioning"
-
-        await self.channel_layer.group_add(
-            self.room_group_name, self.channel_name
-        )
-
-        await self.accept()
-
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "connection_established",
-                    "connected": True,
-                    "message": "You are connected to BLE Provisioning",
-                    "scan": {"state": read_scanning_state(self.PATH)},
-                }
-            )
-        )
-
-    async def disconnect(self, code):
-        write_unprovisioned(self.PATH, {})
-        write_scanning_state(self.PATH, False)
-
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-
-    async def send_prov_update(self, message, unprovisioned):
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "prov_state",
-                "unprovisioned": unprovisioned,
-            },
-        )
-
     async def prov_update(self, event):
-        unprovisioned = event["unprovisioned"]
         await self.send(
             text_data=json.dumps(
                 {
-                    "type": "prov_state",
-                    "scan": {
-                        "unprovisioned": unprovisioned,
+                    "type": "prov_update",
+                    "prov": {
+                        "state": read_prov_state(self.PATH),
+                        "uuid": read_prov_device(self.PATH),
                     },
                 }
             )

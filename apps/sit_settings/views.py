@@ -13,7 +13,7 @@ class SettingsViewSet(viewsets.ModelViewSet):
 
     """
 
-    queryset = UwbDeviceSettings.objects.all()
+    queryset = UwbDeviceSettings.objects.all().order_by("id")
     serializer_class = UwbDeviceSettingsSerializer
     permission_classes = [
         permissions.IsAuthenticated,
