@@ -36,5 +36,5 @@ class UsersViewSet(viewsets.ReadOnlyModelViewSet):
     This viewset automatically provides `list` and `retrieve` actions.
     """
 
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("id")
     serializer_class = UserSerializer
