@@ -24,5 +24,4 @@ urlpatterns = [
     path("", include("web.urls")),
     path("api-auth/", include("rest_framework.urls")),
     path("", include("sit_settings.urls")),
-    path("", include("sit_ips.urls")),
 ]

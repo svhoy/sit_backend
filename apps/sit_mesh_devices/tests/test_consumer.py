@@ -19,7 +19,7 @@ class TestWebSocket:
     async def test_can_connect_to_server(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
-            application=application, path="ws/ble-devices/"
+            application=application, path="ws/ble-mesh-devices/"
         )
         connected, _ = await communicator.connect()
         assert connected is True
@@ -28,7 +28,7 @@ class TestWebSocket:
     async def test_can_send_connection_message(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
-            application=application, path="ws/ble-devices/"
+            application=application, path="ws/ble-mesh-devices/"
         )
         await communicator.connect()
         message = {
@@ -44,7 +44,7 @@ class TestWebSocket:
     async def test_receive_and_send_start_scanning_message(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
-            application=application, path="ws/ble-devices/"
+            application=application, path="ws/ble-mesh-devices/"
         )
         await communicator.connect()
         response = await communicator.receive_json_from()
@@ -68,7 +68,7 @@ class TestWebSocket:
     async def test_receive_and_send_end_scanning_message(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
-            application=application, path="ws/ble-devices/"
+            application=application, path="ws/ble-mesh-devices/"
         )
         await communicator.connect()
         response = await communicator.receive_json_from()
@@ -89,7 +89,7 @@ class TestWebSocket:
     async def test_receive_and_send_start_prov_message(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
-            application=application, path="ws/ble-devices/"
+            application=application, path="ws/ble-mesh-devices/"
         )
         await communicator.connect()
         response = await communicator.receive_json_from()
