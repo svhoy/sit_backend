@@ -6,48 +6,78 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sit_settings', '0001_initial'),
+        ("sit_settings", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='data_rate',
-            field=models.CharField(choices=[('DWT_BR_110K', 'DWT_BR_110K'), ('DWT_BR_850K', 'DWT_BR_850K'), ('DWT_BR_6M8', 'DWT_BR_6M8')], default='DWT_BR_6M8', max_length=15),
+            model_name="uwbdevicesettings",
+            name="data_rate",
+            field=models.CharField(
+                choices=[
+                    ("DWT_BR_110K", "DWT_BR_110K"),
+                    ("DWT_BR_850K", "DWT_BR_850K"),
+                    ("DWT_BR_6M8", "DWT_BR_6M8"),
+                ],
+                default="DWT_BR_6M8",
+                max_length=15,
+            ),
         ),
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='phy_header_mode',
-            field=models.CharField(choices=[('DWT_PHRMODE_STD', 'DWT_PHRMODE_STD'), ('DWT_PHRMODE_EXT', 'DWT_PHRMODE_EXT')], default='DWT_PHRMODE_STD', max_length=15),
+            model_name="uwbdevicesettings",
+            name="phy_header_mode",
+            field=models.CharField(
+                choices=[
+                    ("DWT_PHRMODE_STD", "DWT_PHRMODE_STD"),
+                    ("DWT_PHRMODE_EXT", "DWT_PHRMODE_EXT"),
+                ],
+                default="DWT_PHRMODE_STD",
+                max_length=15,
+            ),
         ),
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='preamble_chunk_size',
-            field=models.CharField(choices=[('DWT_PAC8', 'DWT_PAC8'), ('DWT_PAC16', 'DWT_PAC16'), ('DWT_PAC32', 'DWT_PAC32'), ('DWT_PAC64', 'DWT_PAC64')], default='DWT_PAC8', max_length=15),
+            model_name="uwbdevicesettings",
+            name="preamble_chunk_size",
+            field=models.CharField(
+                choices=[
+                    ("DWT_PAC8", "DWT_PAC8"),
+                    ("DWT_PAC16", "DWT_PAC16"),
+                    ("DWT_PAC32", "DWT_PAC32"),
+                    ("DWT_PAC64", "DWT_PAC64"),
+                ],
+                default="DWT_PAC8",
+                max_length=15,
+            ),
         ),
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='rx_preamble_code',
+            model_name="uwbdevicesettings",
+            name="rx_preamble_code",
             field=models.IntegerField(default=10),
         ),
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='sfd_mode',
-            field=models.IntegerField(choices=[(0, 'standard SFD'), (1, 'non-standard SFD')], default=0),
+            model_name="uwbdevicesettings",
+            name="sfd_mode",
+            field=models.IntegerField(
+                choices=[(0, "standard SFD"), (1, "non-standard SFD")],
+                default=0,
+            ),
         ),
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='sfd_timeout',
+            model_name="uwbdevicesettings",
+            name="sfd_timeout",
             field=models.IntegerField(default=129),
         ),
         migrations.AddField(
-            model_name='uwbdevicesettings',
-            name='tx_preamble_code',
+            model_name="uwbdevicesettings",
+            name="tx_preamble_code",
             field=models.IntegerField(default=10),
         ),
         migrations.AlterField(
-            model_name='uwbdevicesettings',
-            name='channel_num',
-            field=models.IntegerField(choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (7, 7)], default=5),
+            model_name="uwbdevicesettings",
+            name="channel_num",
+            field=models.IntegerField(
+                choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (7, 7)],
+                default=5,
+            ),
         ),
     ]

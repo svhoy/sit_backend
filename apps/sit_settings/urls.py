@@ -4,7 +4,6 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from .views import SettingsViewSet
 
-
 app_name = "sit_settings"
 
 
@@ -20,7 +19,9 @@ settings_detail = SettingsViewSet.as_view(
 
 urlpatterns = format_suffix_patterns(
     [
-        path("api/settings/uwb/", settings_list, name="uwbdevicesettings-list"),
+        path(
+            "api/settings/uwb/", settings_list, name="uwbdevicesettings-list"
+        ),
         path(
             "api/settings/uwb/<int:pk>/",
             settings_detail,
