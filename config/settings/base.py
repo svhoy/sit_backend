@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     # Own Apps,
     "web",
     "sit_settings",
+    "sit_ble_devices",
     "sit_mesh_devices",
 ]
 
