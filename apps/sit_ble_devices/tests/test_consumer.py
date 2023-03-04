@@ -1,11 +1,9 @@
 # Third Party
 import pytest
-
 from channels.testing import WebsocketCommunicator
 
 # Library
 from config.asgi import application
-
 
 TEST_CHANNEL_LAYERS = {
     "default": {
@@ -101,7 +99,7 @@ class TestBleDeviceWebSocket:
             "type": "scanning_state",
             "scan": {
                 "state": False,
-                "message": "Scan Error no Device with name DWM3001 Blue found",
+                "message": "Connection Error no Device with name DWM3001 Blue found",
                 "connection": "error",
                 "device_name": "",
             },
