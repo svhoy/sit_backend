@@ -4,19 +4,20 @@ import json
 # Third Party
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
+
 from .utils import (
     read_prov_device,
     read_prov_state,
     read_scanning_state,
-    write_scanning_state,
     read_unprovisioned,
-    write_unprovisioned,
     write_prov,
+    write_scanning_state,
+    write_unprovisioned,
 )
 
 
-class BleDeviceConsumer(AsyncWebsocketConsumer):
-    PATH = "apps/sit_devices/data_cache/scan_cache.json"
+class BleMeshDeviceConsumer(AsyncWebsocketConsumer):
+    PATH = "apps/sit_mesh_devices/data_cache/scan_cache.json"
 
     async def connect(self):
         self.room_group_name = "scan"

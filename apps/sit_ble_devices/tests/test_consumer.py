@@ -15,7 +15,7 @@ TEST_CHANNEL_LAYERS = {
 
 
 @pytest.mark.asyncio
-class TestWebSocket:
+class TestBleDeviceWebSocket:
     async def test_can_connect_to_server(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
@@ -34,14 +34,14 @@ class TestWebSocket:
         message = {
             "type": "connection_established",
             "connected": True,
-            "message": "You are connected to BLE Scan",
-            "scan": {"state": False},
         }
         response = await communicator.receive_json_from()
         assert response == message
         await communicator.disconnect()
 
-    async def test_receive_and_send_start_scanning_message(self, settings):
+    async def test_receive_and_send_start_scanning_message_specific_device(
+        self, settings
+    ):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
             application=application, path="ws/ble-devices/"
@@ -50,14 +50,14 @@ class TestWebSocket:
         response = await communicator.receive_json_from()
         start_message = {
             "type": "scanning_state",
-            "scan": {"state": True},
+            "scan": {"state": True, "device_name": "DWM3001 Blue"},
         }
         rev_message = {
             "type": "scanning_state",
             "scan": {
                 "state": True,
-                "message": "Scanning...",
-                "unprovisioned": None,
+                "message": "Scanning for Device DWM3001 Blue...",
+                "device_name": "DWM3001 Blue",
             },
         }
         await communicator.send_json_to(start_message)
@@ -65,20 +65,22 @@ class TestWebSocket:
         assert response == rev_message
         await communicator.disconnect()
 
-    async def test_receive_and_send_end_scanning_message(self, settings):
+    async def test_receive_and_send_connection_successful_message(
+        self, settings
+    ):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
             application=application, path="ws/ble-devices/"
         )
         await communicator.connect()
         response = await communicator.receive_json_from()
-        lst = [42, 98, 77]
         message = {
             "type": "scanning_state",
             "scan": {
                 "state": False,
-                "message": "Scan Completed",
-                "unprovisioned": lst,
+                "message": "Connection Complete",
+                "connection": "complete",
+                "device_name": "DWM3001 Blue",
             },
         }
         await communicator.send_json_to(message)
@@ -86,7 +88,9 @@ class TestWebSocket:
         assert response == message
         await communicator.disconnect()
 
-    async def test_receive_and_send_start_prov_message(self, settings):
+    async def test_receive_and_send_connection_unsuccessful_message(
+        self, settings
+    ):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
             application=application, path="ws/ble-devices/"
@@ -94,10 +98,12 @@ class TestWebSocket:
         await communicator.connect()
         response = await communicator.receive_json_from()
         message = {
-            "type": "prov_update",
-            "prov": {
-                "state": True,
-                "uuid": 44,
+            "type": "scanning_state",
+            "scan": {
+                "state": False,
+                "message": "Scan Error no Device with name DWM3001 Blue found",
+                "connection": "error",
+                "device_name": "",
             },
         }
         await communicator.send_json_to(message)
