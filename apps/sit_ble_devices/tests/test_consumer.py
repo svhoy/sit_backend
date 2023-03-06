@@ -37,6 +37,41 @@ class TestBleDeviceWebSocket:
         assert response == message
         await communicator.disconnect()
 
+    async def test_device_connection_register(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+
+        response = await communicator.receive_json_from()
+        send_message = {
+            "type": "connection_register",
+            "device_id": "Frontend_Sven",
+        }
+        await communicator.send_json_to(send_message)
+        rev_message = {
+            "type": "connection_update",
+            "device_list": ["Frontend_Sven"],
+        }
+        response = await communicator.receive_json_from()
+        assert response == rev_message
+        await communicator.disconnect()
+
+    async def test_device_connection_cancel(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+        message = {
+            "type": "connection_established",
+            "connected": True,
+        }
+        response = await communicator.receive_json_from()
+        assert response == message
+        await communicator.disconnect()
+
     async def test_receive_and_send_start_scanning_message_specific_device(
         self, settings
     ):
