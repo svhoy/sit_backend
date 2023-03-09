@@ -13,7 +13,7 @@ TEST_CHANNEL_LAYERS = {
 
 
 @pytest.mark.asyncio
-class TestBleDeviceWebSocket:
+class TestWebSocketConnection:
     async def test_can_connect_to_server(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
@@ -63,15 +63,49 @@ class TestBleDeviceWebSocket:
         communicator = WebsocketCommunicator(
             application=application, path="ws/ble-devices/"
         )
+        communicator2 = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
         await communicator.connect()
-        message = {
-            "type": "connection_established",
-            "connected": True,
-        }
+        await communicator2.connect()
         response = await communicator.receive_json_from()
-        assert response == message
+        response = await communicator2.receive_json_from()
+        message = {
+            "type": "connection_register",
+            "device_id": "Test 1",
+        }
+        message1 = {
+            "type": "connection_register",
+            "device_id": "Test 2",
+        }
+        await communicator.send_json_to(message)
+        response = await communicator.receive_json_from()
+        update_msg = {"type": "connection_update", "device_list": ["Test 1"]}
+        assert update_msg == response
+        await communicator.send_json_to(message1)
+        response = await communicator.receive_json_from()
+        update_msg = {
+            "type": "connection_update",
+            "device_list": ["Test 1", "Test 2"],
+        }
+        update_msg1 = {
+            "type": "connection_update",
+            "device_list": ["Test 2", "Test 1"],
+        }
+        if response["device_list"] == ["Test 1", "Test 2"]:
+            assert update_msg == response
+        else:
+            assert update_msg1 == response
+        await communicator2.disconnect()
+
+        ping_msg = {"type": "connection_ping"}
+        response = await communicator.receive_json_from()
+        assert response == ping_msg
         await communicator.disconnect()
 
+
+@pytest.mark.asyncio
+class TestBLEDeviceConnection:
     async def test_receive_and_send_start_scanning_message_specific_device(
         self, settings
     ):
@@ -134,7 +168,7 @@ class TestBleDeviceWebSocket:
             "type": "scanning_state",
             "scan": {
                 "state": False,
-                "message": "Connection Error no Device with name DWM3001 Blue found",
+                "message": "Connection Error with DWM3001 Blue",
                 "connection": "error",
                 "device_name": "",
             },
@@ -143,3 +177,39 @@ class TestBleDeviceWebSocket:
         response = await communicator.receive_json_from()
         assert response == message
         await communicator.disconnect()
+
+    async def test_receive_and_send_device_not_found_message(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+        response = await communicator.receive_json_from()
+        message = {
+            "type": "scanning_state",
+            "scan": {
+                "state": False,
+                "message": "Device DWM3001 Blue not found",
+                "connection": "notFound",
+                "device_name": "",
+            },
+        }
+        await communicator.send_json_to(message)
+        response = await communicator.receive_json_from()
+        assert response == message
+        await communicator.disconnect()
+
+    async def test_disconnect_ble_device_msg(self, settings):
+        pass
+
+
+@pytest.mark.asyncio
+class TestUWBDistanceMeasuring:
+    async def test_start_distance_measuring(self, settings):
+        pass
+
+    async def test_stop_distance_measuring(self, settings):
+        pass
+
+    async def test_distance_measuring(self, settings):
+        pass

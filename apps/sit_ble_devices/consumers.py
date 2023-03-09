@@ -5,6 +5,8 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 
+from .store.store import Store
+
 
 class BleDeviceConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -26,7 +28,13 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, code):
-        pass
+        json_store = Store()
+        device_list = []
+        device_list.extend(json_store.get_value("device_list", []))
+        device_list.clear()
+        json_store.set_value("device_list", device_list)
+        json_store.save()
+        await self.send_connection_ping()
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -34,6 +42,8 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             case {"type": "scanning_state", "scan": scan}:
                 await self.scanning_state(scan)
             case {"type": "connection_register", "device_id": device_id}:
+                await self.connection_register(device_id)
+            case {"type": "connection_ping", "device_id": device_id}:
                 await self.connection_register(device_id)
 
     async def scanning_state(self, scan_data):
@@ -60,7 +70,18 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             } if state is False and connection == "error":
                 await self.send_connection_msg(
                     False,
-                    "Connection Error no Device with name DWM3001 Blue found",
+                    "Connection Error with DWM3001 Blue",
+                    device_name,
+                    connection,
+                )
+            case {
+                "state": state,
+                "connection": connection,
+                "device_name": device_name,
+            } if state is False and connection == "notFound":
+                await self.send_connection_msg(
+                    False,
+                    "Device DWM3001 Blue not found",
                     device_name,
                     connection,
                 )
@@ -127,7 +148,13 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         )
 
     async def connection_register(self, device_id):
-        await self.send_connection_update([device_id])
+        json_store = Store()
+        device_list = json_store.get_value("device_list", [])
+        device_set = set(device_list)
+        device_set.add(device_id)
+        json_store.set_value("device_list", list(device_set))
+        json_store.save()
+        await self.send_connection_update(json_store.get_value("device_list"))
 
     async def send_connection_update(self, device_list):
         await self.channel_layer.group_send(
@@ -145,3 +172,14 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 {"type": "connection_update", "device_list": device_list}
             )
         )
+
+    async def send_connection_ping(self):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "connection_ping_msg",
+            },
+        )
+
+    async def connection_ping_msg(self, event):
+        await self.send(text_data=json.dumps({"type": "connection_ping"}))
