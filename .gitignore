@@ -132,3 +132,5 @@ GitHub.sublime-settings
 
 .vscode/* 
 .history
+
+*.json
