@@ -1,6 +1,8 @@
 # Third Party
 import pytest
+from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
+from sit_ble_devices.models import DistanceMeasurement
 
 # Library
 from config.asgi import application
@@ -12,6 +14,7 @@ TEST_CHANNEL_LAYERS = {
 }
 
 
+@pytest.mark.django_db
 @pytest.mark.asyncio
 class TestWebSocketConnection:
     async def test_can_connect_to_server(self, settings):
@@ -104,6 +107,7 @@ class TestWebSocketConnection:
         await communicator.disconnect()
 
 
+@pytest.mark.django_db
 @pytest.mark.asyncio
 class TestBLEDeviceConnection:
     async def test_receive_and_send_start_scanning_message_specific_device(
@@ -200,16 +204,79 @@ class TestBLEDeviceConnection:
         await communicator.disconnect()
 
     async def test_disconnect_ble_device_msg(self, settings):
-        pass
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+        response = await communicator.receive_json_from()
+        message = {
+            "type": "scanning_state",
+            "scan": {
+                "state": False,
+                "message": "Device DWM3001 Blue disconnected",
+                "connection": "disconnect",
+                "device_name": "DWM3001 Blue",
+            },
+        }
+        await communicator.send_json_to(message)
+        response = await communicator.receive_json_from()
+        assert response == message
+        await communicator.disconnect()
 
 
+@pytest.mark.django_db
 @pytest.mark.asyncio
 class TestUWBDistanceMeasuring:
     async def test_start_distance_measuring(self, settings):
-        pass
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+        response = await communicator.receive_json_from()
+        message = {
+            "type": "distance_msg",
+            "state": "start",
+            "distance": -1,
+        }
+        await communicator.send_json_to(message)
+        response = await communicator.receive_json_from()
+        assert response == message
+        await communicator.disconnect()
 
     async def test_stop_distance_measuring(self, settings):
-        pass
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+        response = await communicator.receive_json_from()
+        message = {
+            "type": "distance_msg",
+            "state": "stop",
+            "distance": -1,
+        }
+        await communicator.send_json_to(message)
+        response = await communicator.receive_json_from()
+        assert response == message
+        await communicator.disconnect()
 
     async def test_distance_measuring(self, settings):
-        pass
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        communicator = WebsocketCommunicator(
+            application=application, path="ws/ble-devices/"
+        )
+        await communicator.connect()
+        response = await communicator.receive_json_from()
+        message = {
+            "type": "distance_msg",
+            "state": "scanning",
+            "distance": 23.2,
+        }
+        await communicator.send_json_to(message)
+        response = await communicator.receive_json_from()
+        assert response == message
+        test = await DistanceMeasurement.objects.aget(pk=1)
+        assert 23.2 == test.distance
+        await communicator.disconnect()
