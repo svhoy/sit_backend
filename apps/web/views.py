@@ -18,6 +18,11 @@ def api_root(request, format=None):
                 "web:token_obtain_pair", request=request, format=format
             ),
             "users": reverse("web:user-list", request=request, format=format),
+            "ble_devices": reverse(
+                "sit_ble_devices:measurement-list",
+                request=request,
+                format=format,
+            ),
             "settings": reverse(
                 "sit_settings:uwbdevicesettings-list",
                 request=request,
