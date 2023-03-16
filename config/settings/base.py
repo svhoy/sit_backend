@@ -12,10 +12,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 # Standard Library
 import sys
-
 from datetime import timedelta
 from pathlib import Path
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -59,7 +57,6 @@ INSTALLED_APPS = [
     "web",
     "sit_settings",
     "sit_ble_devices",
-    "sit_mesh_devices",
 ]
 
 MIDDLEWARE = [

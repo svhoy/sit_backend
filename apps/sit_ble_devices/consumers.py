@@ -1,9 +1,11 @@
 # Standard Library
 import json
 
+from asgiref.sync import sync_to_async
+
 # Third Party
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.layers import get_channel_layer
+from sit_ble_devices.models import DistanceMeasurement
 
 from .store.store import Store
 
@@ -45,6 +47,18 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.connection_register(device_id)
             case {"type": "connection_ping", "device_id": device_id}:
                 await self.connection_register(device_id)
+            case {
+                "type": "distance_msg",
+                "state": state,
+                "distance": distance,
+            }:
+                if distance > -1:
+                    await sync_to_async(self.save_distance)(distance)
+                await self.send_distance(state, distance)
+
+    def save_distance(self, distance):
+        distance_model = DistanceMeasurement(distance=distance)
+        distance_model.save()
 
     async def scanning_state(self, scan_data):
         match scan_data:
@@ -82,6 +96,17 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.send_connection_msg(
                     False,
                     "Device DWM3001 Blue not found",
+                    device_name,
+                    connection,
+                )
+            case {
+                "state": state,
+                "connection": connection,
+                "device_name": device_name,
+            } if state is False and connection == "disconnect":
+                await self.send_connection_msg(
+                    False,
+                    "Device DWM3001 Blue disconnected",
                     device_name,
                     connection,
                 )
@@ -183,3 +208,18 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     async def connection_ping_msg(self, event):
         await self.send(text_data=json.dumps({"type": "connection_ping"}))
+
+    async def send_distance(self, state, distance):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {"type": "distance_msg", "state": state, "distance": distance},
+        )
+
+    async def distance_msg(self, event):
+        distance = event["distance"]
+        state = event["state"]
+        await self.send(
+            text_data=json.dumps(
+                {"type": "distance_msg", "state": state, "distance": distance}
+            )
+        )
