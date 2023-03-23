@@ -5,7 +5,7 @@ import os
 class Store:
     def __init__(
         self,
-        location="apps/sit_ble_devices/static/sit_ble_devices/data/store.json",
+        location="apps/sit_ble_devices/static/store/store.json",
     ) -> None:
         self._location = location
 

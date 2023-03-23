@@ -3,6 +3,7 @@ import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from sit_ble_devices.models import DistanceMeasurement
+from sit_ble_devices.store.store import Store
 
 # Library
 from config.asgi import application
@@ -12,6 +13,24 @@ TEST_CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
+
+
+def store_cleanup():
+    json_store = Store()
+    connection_list = []
+    json_store.set_value("websocket_connection", connection_list)
+    json_store.set_value("device_list", connection_list)
+    json_store.save()
+
+
+@pytest.fixture(autouse=True)
+def clean_store_files():
+    # Code that will run before your test, for example:
+    store_cleanup()
+    # A test function will be run at this point
+    yield
+    # Code that will run after your test, for example:
+    store_cleanup()
 
 
 @pytest.mark.django_db
@@ -55,11 +74,13 @@ class TestWebSocketConnection:
         await communicator.send_json_to(send_message)
         rev_message = {
             "type": "connection_update",
-            "device_list": ["Frontend_Sven"],
+            "connection_list": ["Frontend_Sven"],
+            "device_list": [],
         }
         response = await communicator.receive_json_from()
         assert response == rev_message
         await communicator.disconnect()
+        Store
 
     async def test_device_connection_cancel(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
@@ -83,19 +104,25 @@ class TestWebSocketConnection:
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()
-        update_msg = {"type": "connection_update", "device_list": ["Test 1"]}
+        update_msg = {
+            "type": "connection_update",
+            "connection_list": ["Test 1"],
+            "device_list": [],
+        }
         assert update_msg == response
         await communicator.send_json_to(message1)
         response = await communicator.receive_json_from()
         update_msg = {
             "type": "connection_update",
-            "device_list": ["Test 1", "Test 2"],
+            "connection_list": ["Test 1", "Test 2"],
+            "device_list": [],
         }
         update_msg1 = {
             "type": "connection_update",
-            "device_list": ["Test 2", "Test 1"],
+            "connection_list": ["Test 2", "Test 1"],
+            "device_list": [],
         }
-        if response["device_list"] == ["Test 1", "Test 2"]:
+        if response["connection_list"] == ["Test 1", "Test 2"]:
             assert update_msg == response
         else:
             assert update_msg1 == response
