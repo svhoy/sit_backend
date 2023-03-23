@@ -31,10 +31,12 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         json_store = Store()
-        device_list = []
-        device_list.extend(json_store.get_value("device_list", []))
-        device_list.clear()
-        json_store.set_value("device_list", device_list)
+        connection_list = []
+        connection_list.extend(
+            json_store.get_value("websocket_connection", [])
+        )
+        connection_list.clear()
+        json_store.set_value("websocket_connection", connection_list)
         json_store.save()
         await self.send_connection_ping()
 
@@ -71,12 +73,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 "connection": connection,
                 "device_name": device_name,
             } if state is False and connection == "complete":
-                await self.send_connection_msg(
-                    False,
-                    "Connection Complete",
-                    device_name,
-                    connection,
-                )
+                await self.device_completion(device_name, connection)
             case {
                 "state": state,
                 "connection": connection,
@@ -104,13 +101,9 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 "connection": connection,
                 "device_name": device_name,
             } if state is False and connection == "disconnect":
-                await self.send_connection_msg(
-                    False,
-                    "Device DWM3001 Blue disconnected",
-                    device_name,
-                    connection,
-                )
+                await self.disconnect_ble_device(device_name, connection)
 
+    # Manage Bluetooth Connections
     async def send_start_scanning_msg(self, state, message, device):
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -139,6 +132,36 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def device_completion(self, device_name, connection):
+        json_store = Store()
+        device_list = json_store.get_value("device_list", [])
+        device_set = set(device_list)
+        device_set.add(device_name)
+        json_store.set_value("device_list", list(device_set))
+        json_store.save()
+        await self.send_connection_msg(
+            False,
+            "Connection Complete",
+            device_name,
+            connection,
+        )
+
+    async def disconnect_ble_device(self, device_name, connection):
+        json_store = Store()
+        device_list = []
+        device_list.extend(json_store.get_value("device_list", []))
+        if device_name in device_list:
+            device_list.remove(device_name)
+        json_store.set_value("device_list", device_list)
+        json_store.save()
+        await self.send_connection_msg(
+            False,
+            "Device DWM3001 Blue disconnected",
+            device_name,
+            connection,
+        )
+
+    # Manage Webserver Connections
     async def send_connection_msg(
         self, state, message, device_name, connection
     ):
@@ -174,27 +197,42 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     async def connection_register(self, device_id):
         json_store = Store()
-        device_list = json_store.get_value("device_list", [])
-        device_set = set(device_list)
-        device_set.add(device_id)
-        json_store.set_value("device_list", list(device_set))
+        websocket_connections = json_store.get_value(
+            "websocket_connection", []
+        )
+        connection_set = set(websocket_connections)
+        connection_set.add(device_id)
+        json_store.set_value("websocket_connection", list(connection_set))
         json_store.save()
-        await self.send_connection_update(json_store.get_value("device_list"))
+        await self.send_connection_update(
+            json_store.get_value("websocket_connection"),
+            json_store.get_value("device_list", []),
+        )
 
-    async def send_connection_update(self, device_list):
+    async def send_connection_update(
+        self,
+        connection_list,
+        device_list,
+    ):
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type": "connection_update_msg",
+                "connection_list": connection_list,
                 "device_list": device_list,
             },
         )
 
     async def connection_update_msg(self, event):
+        connection_list = event["connection_list"]
         device_list = event["device_list"]
         await self.send(
             text_data=json.dumps(
-                {"type": "connection_update", "device_list": device_list}
+                {
+                    "type": "connection_update",
+                    "connection_list": connection_list,
+                    "device_list": device_list,
+                }
             )
         )
 
@@ -209,6 +247,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
     async def connection_ping_msg(self, event):
         await self.send(text_data=json.dumps({"type": "connection_ping"}))
 
+    # Distance Messages
     async def send_distance(self, state, distance):
         await self.channel_layer.group_send(
             self.room_group_name,
