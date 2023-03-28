@@ -3,7 +3,6 @@ import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from sit_ble_devices.models import DistanceMeasurement
-from sit_ble_devices.store.store import Store
 
 # Library
 from config.asgi import application
@@ -13,24 +12,6 @@ TEST_CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
-
-
-def store_cleanup():
-    json_store = Store()
-    connection_list = []
-    json_store.set_value("websocket_connection", connection_list)
-    json_store.set_value("device_list", connection_list)
-    json_store.save()
-
-
-@pytest.fixture(autouse=True)
-def clean_store_files():
-    # Code that will run before your test, for example:
-    store_cleanup()
-    # A test function will be run at this point
-    yield
-    # Code that will run after your test, for example:
-    store_cleanup()
 
 
 @pytest.mark.django_db
@@ -59,7 +40,9 @@ class TestWebSocketConnection:
         assert response == message
         await communicator.disconnect()
 
-    async def test_device_connection_register(self, settings):
+    async def test_device_connection_register(
+        self, settings, clean_store_files
+    ):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
             application=application, path="ws/ble-devices/"
@@ -80,9 +63,8 @@ class TestWebSocketConnection:
         response = await communicator.receive_json_from()
         assert response == rev_message
         await communicator.disconnect()
-        Store
 
-    async def test_device_connection_cancel(self, settings):
+    async def test_device_connection_cancel(self, settings, clean_store_files):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
             application=application, path="ws/ble-devices/"
