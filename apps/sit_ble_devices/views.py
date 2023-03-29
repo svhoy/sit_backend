@@ -29,7 +29,7 @@ class DistanceMeasurementViewSet(
     permission_classes = [
         permissions.IsAuthenticated,
     ]
-    PageNumberPagination.page_size = 100
+    PageNumberPagination.page_size = 10
     PageNumberPagination.page_size_query_param = "size"
 
 
@@ -46,7 +46,7 @@ class MeasurementTestSettingsViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
         IsOwnerOrReadOnly,
     ]
-    PageNumberPagination.page_size = 100
+    PageNumberPagination.page_size = 10
     PageNumberPagination.page_size_query_param = "size"
 
 
@@ -63,5 +63,5 @@ class MeasurementTestViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
         IsOwnerOrReadOnly,
     ]
-    PageNumberPagination.page_size = 100
+    PageNumberPagination.page_size = 10
     PageNumberPagination.page_size_query_param = "size"
