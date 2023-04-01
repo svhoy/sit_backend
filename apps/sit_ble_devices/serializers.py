@@ -1,10 +1,6 @@
 from rest_framework import serializers
 
-from .models import (
-    DistanceMeasurement,
-    MeasurementTest,
-    MeasurementTestSettings,
-)
+from .models import DeviceTestGroups, DeviceTests, DistanceMeasurement
 
 
 class DistanceMeasurementSerializer(serializers.ModelSerializer):
@@ -13,18 +9,17 @@ class DistanceMeasurementSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class MeasurementTestSettingsSerializer(serializers.ModelSerializer):
+class DeviceTestGroupsSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="owner.username")
 
     class Meta:
-        model = MeasurementTestSettings
+        model = DeviceTestGroups
         fields = "__all__"
 
 
-class MeasurementTestSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField()
-    test_settings = MeasurementTestSettingsSerializer(read_only=True)
+class DeviceTestsSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source="owner.username")
 
     class Meta:
-        model = MeasurementTest
+        model = DeviceTests
         fields = "__all__"

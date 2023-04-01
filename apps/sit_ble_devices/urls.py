@@ -3,9 +3,9 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_simplejwt import views as jwt_views
 
 from .views import (
+    DeviceTestGroupsViewSet,
+    DeviceTestsViewSet,
     DistanceMeasurementViewSet,
-    MeasurementTestSettingsViewSet,
-    MeasurementTestViewSet,
 )
 
 app_name = "sit_ble_devices"
@@ -16,13 +16,17 @@ measurement_delete = DistanceMeasurementViewSet.as_view(
         "delete": "destroy",
     }
 )
-test_view_list = MeasurementTestViewSet.as_view(
+test_view_list = DeviceTestsViewSet.as_view({"get": "list", "post": "create"})
+test_view_details = DeviceTestsViewSet.as_view(
+    {
+        "get": "retrieve",
+        "delete": "destroy",
+    }
+)
+test_groups_view_list = DeviceTestGroupsViewSet.as_view(
     {"get": "list", "post": "create"}
 )
-test_settings_view_list = MeasurementTestSettingsViewSet.as_view(
-    {"get": "list", "post": "create"}
-)
-test_settings_view_detail = MeasurementTestSettingsViewSet.as_view(
+test_groups_view_detail = DeviceTestGroupsViewSet.as_view(
     {
         "get": "retrieve",
         "put": "update",
@@ -43,15 +47,16 @@ urlpatterns = format_suffix_patterns(
             name="measurement-detail",
         ),
         path("api/tests/", test_view_list, name="test-list"),
+        path("api/tests/<int:pk>/", test_view_details, name="test-details"),
         path(
-            "api/tests/settings-list",
-            test_settings_view_list,
-            name="test-settings-list",
+            "api/tests/groups",
+            test_groups_view_list,
+            name="test-groups-list",
         ),
         path(
-            "api/tests/settings/<int:pk>/",
-            test_settings_view_detail,
-            name="test-settings-detail",
+            "api/tests/groups/<int:pk>/",
+            test_groups_view_detail,
+            name="test-groups-detail",
         ),
     ]
 )

@@ -1,16 +1,12 @@
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from .models import (
-    DistanceMeasurement,
-    MeasurementTest,
-    MeasurementTestSettings,
-)
+from .models import DeviceTestGroups, DeviceTests, DistanceMeasurement
 from .premissions import IsOwnerOrReadOnly
 from .serializers import (
+    DeviceTestGroupsSerializer,
+    DeviceTestsSerializer,
     DistanceMeasurementSerializer,
-    MeasurementTestSerializer,
-    MeasurementTestSettingsSerializer,
 )
 
 
@@ -24,7 +20,7 @@ class DistanceMeasurementViewSet(
     This viewset automatically provides `list` and `destroy` actions.
     """
 
-    queryset = DistanceMeasurement.objects.all().order_by("created")
+    queryset = DistanceMeasurement.objects.all().order_by("-created")
     serializer_class = DistanceMeasurementSerializer
     permission_classes = [
         permissions.IsAuthenticated,
@@ -33,15 +29,15 @@ class DistanceMeasurementViewSet(
     PageNumberPagination.page_size_query_param = "size"
 
 
-class MeasurementTestSettingsViewSet(viewsets.ModelViewSet):
+class DeviceTestGroupsViewSet(viewsets.ModelViewSet):
     """
     This viewset automatically provides `list`, `create`, `retrieve`,
     `update` and `destroy` actions.
 
     """
 
-    queryset = MeasurementTestSettings.objects.all().order_by("created")
-    serializer_class = MeasurementTestSettingsSerializer
+    queryset = DeviceTestGroups.objects.all().order_by("-created")
+    serializer_class = DeviceTestGroupsSerializer
     permission_classes = [
         permissions.IsAuthenticated,
         IsOwnerOrReadOnly,
@@ -50,15 +46,15 @@ class MeasurementTestSettingsViewSet(viewsets.ModelViewSet):
     PageNumberPagination.page_size_query_param = "size"
 
 
-class MeasurementTestViewSet(viewsets.ModelViewSet):
+class DeviceTestsViewSet(viewsets.ModelViewSet):
     """
     This viewset automatically provides `list`, `create`, `retrieve`,
     `update` and `destroy` actions.
 
     """
 
-    queryset = MeasurementTest.objects.all().order_by("created")
-    serializer_class = MeasurementTestSerializer
+    queryset = DeviceTests.objects.all().order_by("-created")
+    serializer_class = DeviceTestsSerializer
     permission_classes = [
         permissions.IsAuthenticated,
         IsOwnerOrReadOnly,
