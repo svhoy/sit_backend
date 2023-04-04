@@ -31,6 +31,9 @@ class DeviceTests(models.Model):
         DeviceTestGroups,
         on_delete=models.CASCADE,
     )
+    real_test_distance = models.FloatField(
+        validators=[MinValueValidator(0.0)], null=True, blank=True
+    )
     comments = models.CharField(max_length=300, blank=True, null=True)
 
     class Meta:
@@ -40,6 +43,7 @@ class DeviceTests(models.Model):
 class DistanceMeasurement(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     distance = models.FloatField()
+
     test = models.ForeignKey(
         DeviceTests, null=True, blank=True, on_delete=models.CASCADE
     )

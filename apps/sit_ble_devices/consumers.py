@@ -5,12 +5,14 @@ from asgiref.sync import sync_to_async
 
 # Third Party
 from channels.generic.websocket import AsyncWebsocketConsumer
-from sit_ble_devices.models import DistanceMeasurement
+from sit_ble_devices.models import DeviceTests, DistanceMeasurement
 
 from .store.store import Store
 
 
 class BleDeviceConsumer(AsyncWebsocketConsumer):
+    _test_id = None
+
     async def connect(self):
         self.room_group_name = "ble_device"
 
@@ -42,6 +44,8 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
+        print("test1")
+        print(data)
         match data:
             case {"type": "scanning_state", "scan": scan}:
                 await self.scanning_state(scan)
@@ -49,18 +53,8 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.connection_register(device_id)
             case {"type": "connection_ping", "device_id": device_id}:
                 await self.connection_register(device_id)
-            case {
-                "type": "distance_msg",
-                "state": state,
-                "distance": distance,
-            }:
-                if distance > -1:
-                    await sync_to_async(self.save_distance)(distance)
-                await self.send_distance(state, distance)
-
-    def save_distance(self, distance):
-        distance_model = DistanceMeasurement(distance=distance)
-        distance_model.save()
+            case {"type": "distance_msg", "data": data}:
+                await self.handle_distance_msg(data)
 
     async def scanning_state(self, scan_data):
         match scan_data:
@@ -248,17 +242,62 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"type": "connection_ping"}))
 
     # Distance Messages
-    async def send_distance(self, state, distance):
+    async def handle_distance_msg(self, data):
+        match data:
+            case {
+                "state": state,
+                "distance": distance,
+                "test_id": test_id,
+            } if state == "start":
+                self._test_id = test_id
+                await self.send_distance(state, distance, test_id)
+            case {
+                "state": state,
+                "distance": distance,
+                "test_id": test_id,
+            } if state == "scanning":
+                if distance > -1:
+                    await sync_to_async(self.save_distance)(distance, test_id)
+                await self.send_distance(state, distance, test_id)
+            case {
+                "state": state,
+                "distance": distance,
+                "test_id": test_id,
+            } if state == "stop":
+                self._test_id = None
+                await self.send_distance(state, distance, test_id)
+
+    def save_distance(self, distance, test_id):
+        device_test = DeviceTests.objects.get(id=test_id)
+        distance_model = DistanceMeasurement.objects.create(
+            distance=distance, test=device_test
+        )
+        distance_model.save()
+
+    async def send_distance(self, state, distance, test_id):
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "distance_msg", "state": state, "distance": distance},
+            {
+                "type": "distance_msg",
+                "state": state,
+                "distance": distance,
+                "test_id": test_id,
+            },
         )
 
     async def distance_msg(self, event):
         distance = event["distance"]
         state = event["state"]
+        test_id = event["test_id"]
         await self.send(
             text_data=json.dumps(
-                {"type": "distance_msg", "state": state, "distance": distance}
+                {
+                    "type": "distance_msg",
+                    "data": {
+                        "state": state,
+                        "distance": distance,
+                        "test_id": test_id,
+                    },
+                }
             )
         )
