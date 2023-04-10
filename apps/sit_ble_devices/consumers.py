@@ -155,7 +155,6 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             connection,
         )
 
-    # Manage Webserver Connections
     async def send_connection_msg(
         self, state, message, device_name, connection
     ):
@@ -189,6 +188,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    # Manage Webserver Connections
     async def connection_register(self, device_id):
         json_store = Store()
         websocket_connections = json_store.get_value(
