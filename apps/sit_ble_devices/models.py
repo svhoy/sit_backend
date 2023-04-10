@@ -45,7 +45,11 @@ class DistanceMeasurement(models.Model):
     distance = models.FloatField()
 
     test = models.ForeignKey(
-        DeviceTests, null=True, blank=True, on_delete=models.CASCADE
+        DeviceTests,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="test",
     )
 
     class Meta:
