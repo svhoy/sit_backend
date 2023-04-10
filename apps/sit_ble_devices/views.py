@@ -1,3 +1,4 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -8,25 +9,6 @@ from .serializers import (
     DeviceTestsSerializer,
     DistanceMeasurementSerializer,
 )
-
-
-class DistanceMeasurementViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
-    """
-    This viewset automatically provides `list` and `destroy` actions.
-    """
-
-    queryset = DistanceMeasurement.objects.all().order_by("-created")
-    serializer_class = DistanceMeasurementSerializer
-    permission_classes = [
-        permissions.IsAuthenticated,
-    ]
-    PageNumberPagination.page_size = 10
-    PageNumberPagination.page_size_query_param = "size"
 
 
 class DeviceTestGroupsViewSet(viewsets.ModelViewSet):
@@ -61,3 +43,28 @@ class DeviceTestsViewSet(viewsets.ModelViewSet):
     ]
     PageNumberPagination.page_size = 10
     PageNumberPagination.page_size_query_param = "size"
+
+
+class DistanceMeasurementViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    This viewset automatically provides `list` and `destroy` actions.
+    """
+
+    serializer_class = DistanceMeasurementSerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+    PageNumberPagination.page_size = 10
+    PageNumberPagination.page_size_query_param = "size"
+
+    def get_queryset(self):
+        queryset = DistanceMeasurement.objects.all().order_by("-created")
+        test_id = self.request.query_params.get("test", None)
+        if test_id is not None:
+            queryset = queryset.filter(test__id=test_id)
+        return queryset
