@@ -44,8 +44,6 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        print("test1")
-        print(data)
         match data:
             case {"type": "scanning_state", "scan": scan}:
                 await self.scanning_state(scan)
@@ -57,22 +55,23 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.handle_distance_msg(data)
 
     async def scanning_state(self, scan_data):
+        
         match scan_data:
-            case {"state": state, "device_name": device_name} if state is True:
+            case {"state": True as state, "device_name": device_name}:
                 await self.send_start_scanning_msg(
                     state, "Scanning for Device ", device_name
                 )
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "complete" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "complete":
+            }:
                 await self.device_completion(device_name, connection)
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "error" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "error":
+            }:
                 await self.send_connection_msg(
                     False,
                     "Connection Error with DWM3001 Blue",
@@ -80,10 +79,10 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                     connection,
                 )
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "notFound" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "notFound":
+            }:
                 await self.send_connection_msg(
                     False,
                     "Device DWM3001 Blue not found",
@@ -91,10 +90,10 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                     connection,
                 )
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "disconnect" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "disconnect":
+            }:
                 await self.disconnect_ble_device(device_name, connection)
 
     # Manage Bluetooth Connections
@@ -245,33 +244,38 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
     async def handle_distance_msg(self, data):
         match data:
             case {
-                "state": state,
+                "state": "start" as state,
                 "distance": distance,
                 "test_id": test_id,
-            } if state == "start":
+            }:
                 self._test_id = test_id
                 await self.send_distance(state, distance, test_id)
             case {
-                "state": state,
+                "state": "scanning" as state,
                 "distance": distance,
                 "test_id": test_id,
-            } if state == "scanning":
+            }:
                 if distance > -1:
                     await sync_to_async(self.save_distance)(distance, test_id)
                 await self.send_distance(state, distance, test_id)
             case {
-                "state": state,
+                "state": "stop" as state,
                 "distance": distance,
                 "test_id": test_id,
-            } if state == "stop":
+            }:
                 self._test_id = None
                 await self.send_distance(state, distance, test_id)
 
     def save_distance(self, distance, test_id):
-        device_test = DeviceTests.objects.get(id=test_id)
-        distance_model = DistanceMeasurement.objects.create(
-            distance=distance, test=device_test
-        )
+        if (test_id is not None):
+            device_test = DeviceTests.objects.get(id=test_id)
+            distance_model = DistanceMeasurement.objects.create(
+                distance=distance, test=device_test
+            )
+        else:
+            distance_model = DistanceMeasurement.objects.create(
+                distance=distance, test=None
+            )
         distance_model.save()
 
     async def send_distance(self, state, distance, test_id):
@@ -289,15 +293,16 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         distance = event["distance"]
         state = event["state"]
         test_id = event["test_id"]
+        msg = json.dumps(
+            {
+                "type": "distance_msg",
+                "data": {
+                    "state": state,
+                    "distance": distance,
+                    "test_id": test_id,
+                },
+            }
+        )
         await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "distance_msg",
-                    "data": {
-                        "state": state,
-                        "distance": distance,
-                        "test_id": test_id,
-                    },
-                }
-            )
+            text_data=msg
         )

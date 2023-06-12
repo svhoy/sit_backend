@@ -246,8 +246,11 @@ class TestUWBDistanceMeasuring:
         response = await communicator.receive_json_from()
         message = {
             "type": "distance_msg",
-            "state": "start",
-            "distance": -1,
+            "data": {
+                "state": "start",
+                "test_id": None,
+                "distance": -1,
+            }
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()
@@ -263,8 +266,11 @@ class TestUWBDistanceMeasuring:
         response = await communicator.receive_json_from()
         message = {
             "type": "distance_msg",
-            "state": "stop",
-            "distance": -1,
+            "data": {
+                "state": "stop",
+                "test_id": None,
+                "distance": -1,
+            }
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()
@@ -280,8 +286,11 @@ class TestUWBDistanceMeasuring:
         response = await communicator.receive_json_from()
         message = {
             "type": "distance_msg",
-            "state": "scanning",
+            "data": {
+                            "state": "scanning",
+            "test_id": None,
             "distance": 23.2,
+            }
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()

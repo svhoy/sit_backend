@@ -21,12 +21,12 @@ class TestDistanceMeasurement:
         assert 200 == response.status_code
 
 
-class TestMeasurementTestSettings:
+class TestDeviceTestGroup:
     @pytest.mark.django_db
     def test_test_settings_api_user_list(
-        self, client, login_user, measurement_test_settings
+        self, client, login_user, device_test_group
     ):
-        url = reverse("sit_ble_devices:test-settings-list")
+        url = reverse("sit_ble_devices:test-groups-list")
         response = client.get(
             url,
             {},
@@ -36,9 +36,9 @@ class TestMeasurementTestSettings:
         assert 200 == response.status_code
 
 
-class TestMeasurementTest:
+class TestDeviceTest:
     @pytest.mark.django_db
-    def test_test_api_user_list(self, client, login_user, measurement_test):
+    def test_test_api_user_list(self, client, login_user, device_test_group):
         url = reverse("sit_ble_devices:test-list")
         response = client.get(
             url,
