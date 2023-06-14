@@ -55,7 +55,6 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.handle_distance_msg(data)
 
     async def scanning_state(self, scan_data):
-        
         match scan_data:
             case {"state": True as state, "device_name": device_name}:
                 await self.send_start_scanning_msg(
@@ -242,40 +241,49 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     # Distance Messages
     async def handle_distance_msg(self, data):
+        print("Test: {}".format(data))
         match data:
             case {
                 "state": "start" as state,
-                "distance": distance,
                 "test_id": test_id,
             }:
                 self._test_id = test_id
-                await self.send_distance(state, distance, test_id)
-            case {
-                "state": "scanning" as state,
-                "distance": distance,
-                "test_id": test_id,
-            }:
-                if distance > -1:
-                    await sync_to_async(self.save_distance)(distance, test_id)
-                await self.send_distance(state, distance, test_id)
+                await self.send_distance(state, -1, test_id)
             case {
                 "state": "stop" as state,
-                "distance": distance,
                 "test_id": test_id,
+                **rest,
             }:
                 self._test_id = None
+                await self.send_distance(state, -1, test_id)
+            case {
+                "state": "scanning" as state,
+                "test_id": test_id,
+                "sequence": sequence,
+                "distance": distance,
+                "nlos": nlos,
+                "rssi": rssi,
+                "fpi": fpi,
+            }:
+                if distance > -1:
+                    await sync_to_async(self.save_distance)(
+                        test_id, sequence, distance, nlos, rssi, fpi
+                    )
                 await self.send_distance(state, distance, test_id)
 
-    def save_distance(self, distance, test_id):
-        if (test_id is not None):
+    def save_distance(self, test_id, sequence, distance, nlos, rssi, fpi):
+        device_test = None
+        if test_id is not None:
             device_test = DeviceTests.objects.get(id=test_id)
-            distance_model = DistanceMeasurement.objects.create(
-                distance=distance, test=device_test
-            )
-        else:
-            distance_model = DistanceMeasurement.objects.create(
-                distance=distance, test=None
-            )
+
+        distance_model = DistanceMeasurement.objects.create(
+            test=device_test,
+            sequence=sequence,
+            distance=distance,
+            nlos=nlos,
+            RecivedSignalStrengthIndex=rssi,
+            firstPathIndex=fpi,
+        )
         distance_model.save()
 
     async def send_distance(self, state, distance, test_id):
@@ -303,6 +311,4 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 },
             }
         )
-        await self.send(
-            text_data=msg
-        )
+        await self.send(text_data=msg)
