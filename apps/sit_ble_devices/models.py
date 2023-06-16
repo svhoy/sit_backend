@@ -1,3 +1,4 @@
+from ast import mod
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -54,6 +55,7 @@ class DistanceMeasurement(models.Model):
     nlos = models.IntegerField(blank=True, null=True)
     RecivedSignalStrengthIndex = models.FloatField(blank=True, null=True)
     firstPathIndex = models.FloatField(blank=True, null=True)
+    error_distance = models.FloatField(blank=True, null=True)
 
     class Meta:
         ordering = ["created"]
