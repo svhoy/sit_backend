@@ -5,12 +5,14 @@ from asgiref.sync import sync_to_async
 
 # Third Party
 from channels.generic.websocket import AsyncWebsocketConsumer
-from sit_ble_devices.models import DistanceMeasurement
+from sit_ble_devices.models import DeviceTests, DistanceMeasurement
 
 from .store.store import Store
 
 
 class BleDeviceConsumer(AsyncWebsocketConsumer):
+    _test_id = None
+
     async def connect(self):
         self.room_group_name = "ble_device"
 
@@ -49,36 +51,26 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.connection_register(device_id)
             case {"type": "connection_ping", "device_id": device_id}:
                 await self.connection_register(device_id)
-            case {
-                "type": "distance_msg",
-                "state": state,
-                "distance": distance,
-            }:
-                if distance > -1:
-                    await sync_to_async(self.save_distance)(distance)
-                await self.send_distance(state, distance)
-
-    def save_distance(self, distance):
-        distance_model = DistanceMeasurement(distance=distance)
-        distance_model.save()
+            case {"type": "distance_msg", "data": data}:
+                await self.handle_distance_msg(data)
 
     async def scanning_state(self, scan_data):
         match scan_data:
-            case {"state": state, "device_name": device_name} if state is True:
+            case {"state": True as state, "device_name": device_name}:
                 await self.send_start_scanning_msg(
                     state, "Scanning for Device ", device_name
                 )
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "complete" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "complete":
+            }:
                 await self.device_completion(device_name, connection)
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "error" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "error":
+            }:
                 await self.send_connection_msg(
                     False,
                     "Connection Error with DWM3001 Blue",
@@ -86,10 +78,10 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                     connection,
                 )
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "notFound" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "notFound":
+            }:
                 await self.send_connection_msg(
                     False,
                     "Device DWM3001 Blue not found",
@@ -97,10 +89,10 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                     connection,
                 )
             case {
-                "state": state,
-                "connection": connection,
+                "state": False as state,
+                "connection": "disconnect" as connection,
                 "device_name": device_name,
-            } if state is False and connection == "disconnect":
+            }:
                 await self.disconnect_ble_device(device_name, connection)
 
     # Manage Bluetooth Connections
@@ -161,7 +153,6 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             connection,
         )
 
-    # Manage Webserver Connections
     async def send_connection_msg(
         self, state, message, device_name, connection
     ):
@@ -195,6 +186,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    # Manage Webserver Connections
     async def connection_register(self, device_id):
         json_store = Store()
         websocket_connections = json_store.get_value(
@@ -248,17 +240,89 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"type": "connection_ping"}))
 
     # Distance Messages
-    async def send_distance(self, state, distance):
+    async def handle_distance_msg(self, data):
+        match data:
+            case {
+                "state": "start" as state,
+                "test_id": test_id,
+            }:
+                self._test_id = test_id
+                await self.send_distance(state, -1, test_id)
+            case {
+                "state": "stop" as state,
+                "test_id": test_id,
+            }:
+                self._test_id = None
+                await self.send_distance(state, -1, test_id)
+            case {
+                "state": "scanning" as state,
+                "test_id": test_id,
+                "sequence": sequence,
+                "distance": distance,
+                "nlos": nlos,
+                "rssi": rssi,
+                "fpi": fpi,
+            }:
+                if distance > -1:
+                    error_distance = await sync_to_async(self.save_distance)(
+                        test_id,
+                        sequence,
+                        distance,
+                        nlos,
+                        rssi,
+                        fpi,
+                    )
+                    await self.send_distance(
+                        state, distance, test_id, error_distance
+                    )
+
+    def save_distance(self, test_id, sequence, distance, nlos, rssi, fpi):
+        device_test = None
+        error_distance = None
+        if test_id is not None:
+            device_test = DeviceTests.objects.get(id=test_id)
+            if device_test.real_test_distance is not None:
+                error_distance = distance - device_test.real_test_distance
+        distance_model = DistanceMeasurement.objects.create(
+            test=device_test,
+            sequence=sequence,
+            distance=distance,
+            nlos=nlos,
+            RecivedSignalStrengthIndex=rssi,
+            firstPathIndex=fpi,
+            error_distance=error_distance,
+        )
+        distance_model.save()
+        return error_distance
+
+    async def send_distance(
+        self, state, distance, test_id, error_distance=None
+    ):
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "distance_msg", "state": state, "distance": distance},
+            {
+                "type": "distance_msg",
+                "state": state,
+                "distance": distance,
+                "test_id": test_id,
+                "error_distance": error_distance,
+            },
         )
 
     async def distance_msg(self, event):
         distance = event["distance"]
         state = event["state"]
-        await self.send(
-            text_data=json.dumps(
-                {"type": "distance_msg", "state": state, "distance": distance}
-            )
+        test_id = event["test_id"]
+        error_distance = event["error_distance"]
+        msg = json.dumps(
+            {
+                "type": "distance_msg",
+                "data": {
+                    "state": state,
+                    "distance": distance,
+                    "error_distance": error_distance,
+                    "test_id": test_id,
+                },
+            }
         )
+        await self.send(text_data=msg)

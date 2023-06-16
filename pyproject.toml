@@ -17,4 +17,3 @@ class-naming-style='PascalCase'
 
 [tool.pylint.'MESSAGES CONTROL']
 disable = ['I1101', 'C0114', 'C0115', 'C0116']
-
