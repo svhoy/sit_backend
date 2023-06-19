@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
-from .models import DeviceTestGroups, DeviceTests, DistanceMeasurement
+from .models import (
+    DeviceTestGroups,
+    DeviceTests,
+    DistanceMeasurement,
+    UwbDevice,
+)
 
 
 class DistanceMeasurementSerializer(serializers.ModelSerializer):
@@ -23,4 +28,10 @@ class DeviceTestsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceTests
+        fields = "__all__"
+
+
+class UwbDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UwbDevice
         fields = "__all__"

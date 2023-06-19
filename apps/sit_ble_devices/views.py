@@ -2,13 +2,36 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from .models import DeviceTestGroups, DeviceTests, DistanceMeasurement
+from .models import (
+    UwbDevice,
+    DeviceTestGroups,
+    DeviceTests,
+    DistanceMeasurement,
+)
 from .premissions import IsOwnerOrReadOnly
 from .serializers import (
+    UwbDeviceSerializer,
     DeviceTestGroupsSerializer,
     DeviceTestsSerializer,
     DistanceMeasurementSerializer,
 )
+
+
+class UwbDeviceViewSet(viewsets.ModelViewSet):
+    """
+    This viewset automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    """
+
+    queryset = UwbDevice.objects.all().order_by("created")
+    serializer_class = UwbDeviceSerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsOwnerOrReadOnly,
+    ]
+    PageNumberPagination.page_size = 10
+    PageNumberPagination.page_size_query_param = "size"
 
 
 class DeviceTestGroupsViewSet(viewsets.ModelViewSet):
