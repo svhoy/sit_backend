@@ -28,7 +28,6 @@ class UwbDeviceViewSet(viewsets.ModelViewSet):
     serializer_class = UwbDeviceSerializer
     permission_classes = [
         permissions.IsAuthenticated,
-        IsOwnerOrReadOnly,
     ]
     PageNumberPagination.page_size = 10
     PageNumberPagination.page_size_query_param = "size"
