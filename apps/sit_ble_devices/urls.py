@@ -1,6 +1,5 @@
 from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
-from rest_framework_simplejwt import views as jwt_views
 
 from .views import (
     UwbDeviceViewSet,
