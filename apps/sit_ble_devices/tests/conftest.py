@@ -2,11 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework.test import APIClient
-from sit_ble_devices.models import (
-    DistanceMeasurement,
-    DeviceTests,
-    DeviceTestGroups,
-)
+from sit_ble_devices.models import DeviceTests, DeviceTestGroups, UwbDevice
 from sit_ble_devices.store.store import Store
 
 
@@ -73,3 +69,12 @@ def device_test(user_data, device_test_group):
         owner=user, test_group=device_test_group
     )
     yield device_test
+
+
+@pytest.fixture()
+@pytest.mark.django_db
+def uwb_device_test(user_data):
+    uwb_device_test = UwbDevice.objects.create(
+        device_name="Test Device", device_id="ABCDEF12345"
+    )
+    yield uwb_device_test

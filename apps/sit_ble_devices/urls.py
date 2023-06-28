@@ -1,14 +1,25 @@
 from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
-from rest_framework_simplejwt import views as jwt_views
 
 from .views import (
+    UwbDeviceViewSet,
     DeviceTestGroupsViewSet,
     DeviceTestsViewSet,
     DistanceMeasurementViewSet,
 )
 
 app_name = "sit_ble_devices"
+
+device_detail = UwbDeviceViewSet.as_view(
+    {
+        "get": "retrieve",
+        "put": "update",
+        "patch": "partial_update",
+        "delete": "destroy",
+    }
+)
+
+device_list = UwbDeviceViewSet.as_view({"get": "list", "post": "create"})
 
 measurement_list = DistanceMeasurementViewSet.as_view({"get": "list"})
 measurement_delete = DistanceMeasurementViewSet.as_view(
@@ -38,6 +49,12 @@ test_groups_view_detail = DeviceTestGroupsViewSet.as_view(
 
 urlpatterns = format_suffix_patterns(
     [
+        path("api/device/", device_list, name="device-list"),
+        path(
+            "api/device/<int:pk>/",
+            device_detail,
+            name="device-detail",
+        ),
         path(
             "api/measurement-list/", measurement_list, name="measurement-list"
         ),
