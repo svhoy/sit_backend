@@ -73,7 +73,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             }:
                 await self.send_connection_msg(
                     False,
-                    "Connection Error with DWM3001 Blue",
+                    "Connection Error with " + device_name,
                     device_name,
                     connection,
                 )
@@ -84,7 +84,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             }:
                 await self.send_connection_msg(
                     False,
-                    "Device DWM3001 Blue not found",
+                    device_name + "not found",
                     device_name,
                     connection,
                 )
@@ -149,7 +149,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         json_store.save()
         await self.send_connection_msg(
             False,
-            "Device DWM3001 Blue disconnected",
+            device_name + " disconnected",
             device_name,
             connection,
         )
