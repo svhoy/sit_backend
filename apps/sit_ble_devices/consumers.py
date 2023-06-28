@@ -111,6 +111,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         state = event["state"]
         message = event["message"]
         device = event["device_name"]
+        print(device)
         await self.send(
             text_data=json.dumps(
                 {
