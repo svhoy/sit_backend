@@ -25,6 +25,12 @@ class DeviceTestGroupsSerializer(serializers.ModelSerializer):
 class DeviceTestsSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="owner.username")
     test_group_name = serializers.ReadOnlyField(source="test_group.test_name")
+    initiator_device_name = serializers.ReadOnlyField(
+        source="initiator_device.device_name"
+    )
+    responder_device_name = serializers.ReadOnlyField(
+        source="responder_device.device_name"
+    )
 
     class Meta:
         model = DeviceTests
