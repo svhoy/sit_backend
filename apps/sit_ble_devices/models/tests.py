@@ -1,6 +1,8 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from .devices import UwbDevice
+
 
 class DeviceTestGroups(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -33,6 +35,16 @@ class DeviceTests(models.Model):
     )
     real_test_distance = models.FloatField(
         validators=[MinValueValidator(0.0)], null=True, blank=True
+    )
+    initiator_device = models.ForeignKey(
+        UwbDevice,
+        on_delete=models.DO_NOTHING,
+        related_name="initiator_device",
+    )
+    responder_device = models.ForeignKey(
+        UwbDevice,
+        on_delete=models.DO_NOTHING,
+        related_name="responder_device",
     )
     comments = models.CharField(max_length=300, blank=True, null=True)
 
