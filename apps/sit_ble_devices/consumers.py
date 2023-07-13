@@ -7,7 +7,7 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from sit_ble_devices.models import DeviceTests, DistanceMeasurement
 
-from .store.store import Store
+from .store import Store
 
 
 class BleDeviceConsumer(AsyncWebsocketConsumer):
@@ -51,8 +51,8 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 await self.connection_register(device_id)
             case {"type": "connection_ping", "device_id": device_id}:
                 await self.connection_register(device_id)
-            case {"type": "distance_msg", "data": data}:
-                await self.handle_distance_msg(data)
+            case {"type": "distance_msg", "data": data, "setup": setup}:
+                await self.handle_distance_msg(data, setup)
 
     async def scanning_state(self, scan_data):
         match scan_data:
@@ -84,7 +84,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
             }:
                 await self.send_connection_msg(
                     False,
-                    device_name + "not found",
+                    device_name + " not found",
                     device_name,
                     connection,
                 )
@@ -241,20 +241,27 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"type": "connection_ping"}))
 
     # Distance Messages
-    async def handle_distance_msg(self, data):
+    async def handle_distance_msg(self, data, setup=None):
         match data:
             case {
                 "state": "start" as state,
                 "test_id": test_id,
             }:
                 self._test_id = test_id
-                await self.send_distance(state, -1, test_id)
+                if setup is None:
+                    setup = await sync_to_async(self.set_setup)(
+                        data["test_id"]
+                    )
+                data = {"state": state, "test_id": test_id}
+                await self.send_distance(data, setup)
             case {
                 "state": "stop" as state,
                 "test_id": test_id,
             }:
                 self._test_id = None
-                await self.send_distance(state, -1, test_id)
+                data = {"state": state, "test_id": test_id}
+                print("Test")
+                await self.send_distance(data)
             case {
                 "state": "scanning" as state,
                 "test_id": test_id,
@@ -264,18 +271,33 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
                 "rssi": rssi,
                 "fpi": fpi,
             }:
-                if distance > -1:
-                    error_distance = await sync_to_async(self.save_distance)(
-                        test_id,
-                        sequence,
-                        distance,
-                        nlos,
-                        rssi,
-                        fpi,
-                    )
-                    await self.send_distance(
-                        state, distance, test_id, error_distance
-                    )
+                error_distance = await sync_to_async(self.save_distance)(
+                    test_id,
+                    sequence,
+                    distance,
+                    nlos,
+                    rssi,
+                    fpi,
+                )
+                data = {
+                    "state": state,
+                    "test_id": test_id,
+                    "sequence": sequence,
+                    "distance": distance,
+                    "nlos": nlos,
+                    "rssi": rssi,
+                    "fpi": fpi,
+                    "error_distance": error_distance,
+                }
+                await self.send_distance(data, setup)
+
+    def set_setup(self, test_id):
+        test = DeviceTests.objects.get(pk=test_id)
+        setup = {
+            "initiator_device": test.initiator_device.device_id,
+            "responder_device": test.responder_device.device_id,
+        }
+        return setup
 
     def save_distance(self, test_id, sequence, distance, nlos, rssi, fpi):
         device_test = None
@@ -297,33 +319,19 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
         return error_distance
 
     async def send_distance(
-        self, state, distance, test_id, error_distance=None
+        self,
+        data,
+        setup=None,
     ):
         await self.channel_layer.group_send(
             self.room_group_name,
-            {
-                "type": "distance_msg",
-                "state": state,
-                "distance": distance,
-                "test_id": test_id,
-                "error_distance": error_distance,
-            },
+            {"type": "distance_msg", "data": data, "setup": setup},
         )
 
     async def distance_msg(self, event):
-        distance = event["distance"]
-        state = event["state"]
-        test_id = event["test_id"]
-        error_distance = event["error_distance"]
+        data = event["data"]
+        setup = event["setup"]
         msg = json.dumps(
-            {
-                "type": "distance_msg",
-                "data": {
-                    "state": state,
-                    "distance": distance,
-                    "error_distance": error_distance,
-                    "test_id": test_id,
-                },
-            }
+            {"type": "distance_msg", "data": data, "setup": setup}
         )
         await self.send(text_data=msg)
