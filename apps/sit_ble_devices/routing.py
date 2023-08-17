@@ -1,8 +1,10 @@
 # Third Party
 from django.urls import re_path
 
-from . import consumers
+from .adapters import consumers
 
 websocket_urlpatterns = [
-    re_path(r"ws/ble-devices/", consumers.BleDeviceConsumer.as_asgi()),
+    re_path(
+        r"^ws/sit/(?P<room_id>\w+)$", consumers.BleDeviceConsumer.as_asgi()
+    ),
 ]

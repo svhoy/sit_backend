@@ -99,16 +99,17 @@ CHANNEL_LAYERS = {
     }
 }
 
-# Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
+# Celery settings
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_APP = "sit_ble_devices.service_layer.celery:celery_app"
+CELERY_IMPORTS = (
+    "apps.sit_ble_devices.service_layer.handler.command_handler",
+    "apps.sit_ble_devices.service_layer.celery.messagebus",
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

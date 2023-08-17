@@ -18,9 +18,7 @@ device_detail = UwbDeviceViewSet.as_view(
         "delete": "destroy",
     }
 )
-
 device_list = UwbDeviceViewSet.as_view({"get": "list", "post": "create"})
-
 measurement_list = DistanceMeasurementViewSet.as_view({"get": "list"})
 measurement_delete = DistanceMeasurementViewSet.as_view(
     {
