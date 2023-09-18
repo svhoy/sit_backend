@@ -7,8 +7,8 @@ from apps.sit_ble_devices.service_layer.handlers import (
 )
 
 
-def bootstrap(uow: uow.AbstractUnitOfWork):
-    dependencies = {"uow": uow}
+def bootstrap(uow: uow.AbstractUnitOfWork, duow: uow.DistanceUnitOfWork):
+    dependencies = {"uow": uow, "duow": duow}
 
     injected_event_handlers = {
         event_type: [
@@ -24,7 +24,7 @@ def bootstrap(uow: uow.AbstractUnitOfWork):
     }
 
     return messagebus.MessageBus(
-        uow, injected_event_handlers, injected_command_handlers
+        uow, duow, injected_event_handlers, injected_command_handlers
     )
 
 

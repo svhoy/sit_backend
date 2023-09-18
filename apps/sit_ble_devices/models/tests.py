@@ -50,23 +50,3 @@ class DeviceTests(models.Model):
 
     class Meta:
         ordering = ["created"]
-
-
-class DistanceMeasurement(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    test = models.ForeignKey(
-        DeviceTests,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="test",
-    )
-    sequence = models.IntegerField(blank=True, null=True)
-    distance = models.FloatField()
-    nlos = models.IntegerField(blank=True, null=True)
-    RecivedSignalStrengthIndex = models.FloatField(blank=True, null=True)
-    firstPathIndex = models.FloatField(blank=True, null=True)
-    error_distance = models.FloatField(blank=True, null=True)
-
-    class Meta:
-        ordering = ["created"]

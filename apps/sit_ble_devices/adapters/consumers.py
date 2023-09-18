@@ -1,6 +1,5 @@
 # Standard Library
 import importlib.util
-import os
 import json
 import pkgutil
 
@@ -8,12 +7,12 @@ from asgiref.sync import sync_to_async
 
 # Third Party
 from channels.generic.websocket import AsyncWebsocketConsumer
-from sit_ble_devices.domain import commands, events
+from sit_ble_devices.domain import commands
 from sit_ble_devices import bootstrap
 from sit_ble_devices.models import DeviceTests, DistanceMeasurement
 from sit_ble_devices.service_layer import uow
 
-bus = bootstrap.bootstrap(uow=uow.UnitOfWork())
+bus = bootstrap.bootstrap(uow=uow.UnitOfWork(), duow=uow.DistanceUnitOfWork())
 
 
 class BleDeviceConsumer(AsyncWebsocketConsumer):

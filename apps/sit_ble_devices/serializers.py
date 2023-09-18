@@ -28,8 +28,14 @@ class DeviceTestsSerializer(serializers.ModelSerializer):
     initiator_device_name = serializers.ReadOnlyField(
         source="initiator_device.device_name"
     )
+    initiator_device_id = serializers.ReadOnlyField(
+        source="initiator_device.device_id"
+    )
     responder_device_name = serializers.ReadOnlyField(
         source="responder_device.device_name"
+    )
+    responder_device_id = serializers.ReadOnlyField(
+        source="responder_device.device_id"
     )
 
     class Meta:

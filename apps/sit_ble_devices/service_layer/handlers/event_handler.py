@@ -61,4 +61,5 @@ EVENT_HANDLER = {
     events.BleDeviceUnregistered: [send_device_registered],
     events.BleDeviceConnectError: [redirect_event],
     events.BleDeviceConnectFailed: [redirect_event],
+    events.MeasurementSaved: [redirect_event],
 }

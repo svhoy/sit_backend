@@ -1,6 +1,5 @@
 from dataclasses import dataclass, asdict
 from json import dumps
-from types import NoneType
 
 
 @dataclass
@@ -55,11 +54,8 @@ class StartCalibration(Command):
 
 @dataclass
 class StartDistanceMeasurement(Command):
-    initiator: str | None = None
-    responder: str | None = None
-    test_id: str | None = None
-    min_measurements: int | None = None
-    max_measurements: int | None = None
+    initiator: str
+    responder: str
 
 
 @dataclass
@@ -69,6 +65,52 @@ class StopDistanceMeasurement(Command):
 
 @dataclass
 class SaveMesurement(Command):
+    initiator: str
+    sequence: int
+    measurement: int
+    distance: float
+    nlos: int
+    rssi: float
+    fpi: float
+
+
+@dataclass
+class StartTestMeasurement(Command):
+    test_id: int
+    initiator: str
+    responder: list[str]
+    min_measurement: int
+    max_measurement: int
+
+
+@dataclass
+class StopTestMeasurement(Command):
+    pass
+
+
+@dataclass
+class SaveTestMeasurement(Command):
+    test_id: int
+    initiator: str
+    sequence: int
+    distance: float
+    nlos: int
+    rssi: float
+    fpi: float
+
+
+@dataclass
+class StartCalibrationMeasurement(Command):
+    calibration_id: int
+    devices: list[str]
+    max_measurement: int
+    rx_ant_dly: int = 0
+    tx_ant_dly: int = 0
+
+
+@dataclass
+class SaveCalibrationMeasurement(Command):
+    calibration: int
     initiator: str
     sequence: int
     distance: float

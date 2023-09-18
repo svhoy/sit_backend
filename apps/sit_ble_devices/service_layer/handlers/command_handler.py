@@ -1,4 +1,5 @@
 from channels.layers import get_channel_layer
+from sit_ble_devices.domain.model import distances
 from sit_ble_devices.domain import commands
 from sit_ble_devices.service_layer import uow
 
@@ -31,15 +32,43 @@ async def unregister_ble_device(
         await uow.bleDevices.remove_connection(command.device_id)
 
 
-async def save_measurement(command: commands.SaveMesurement):
-    pass
+async def save_measurement(
+    command: commands.SaveMesurement, duow: uow.DistanceUnitOfWork
+):
+    async with duow:
+        measurement = distances.DistanceMeasurement(
+            sequence=command.sequence,
+            distance=command.distance,
+            nlos=command.nlos,
+            rssi=command.rssi,
+            fpi=command.fpi,
+        )
+        await duow.distanceMeasurement.add(measurement)
+        await duow.commit()
+
+
+async def save_test_measurement(
+    command: commands.SaveTestMeasurement, duow: uow.DistanceUnitOfWork
+):
+    async with duow:
+        measurement = distances.DistanceMeasurement(
+            sequence=command.sequence,
+            distance=command.distance,
+            nlos=command.nlos,
+            rssi=command.rssi,
+            fpi=command.fpi,
+            test_id=command.test_id,
+        )
+        await duow.distanceMeasurement.add(measurement)
+        await duow.commit()
 
 
 async def redirect_command(
     command: commands.ConnectBleDevice
     | commands.DisconnectBleDevice
     | commands.StartDistanceMeasurement
-    | commands.StopDistanceMeasurement,
+    | commands.StopDistanceMeasurement
+    | commands.StartTestMeasurement,
 ):
     data = command.json
     channel_layer = get_channel_layer()
@@ -58,4 +87,6 @@ COMMAND_HANDLER = {
     commands.StartDistanceMeasurement: redirect_command,
     commands.StopDistanceMeasurement: redirect_command,
     commands.SaveMesurement: save_measurement,
+    commands.StartTestMeasurement: redirect_command,
+    commands.SaveTestMeasurement: save_test_measurement,
 }

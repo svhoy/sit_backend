@@ -58,3 +58,14 @@ class BleDeviceConnectError(Event):
 @dataclass
 class BleDeviceDisconnected(Event):
     room_id: str
+
+
+@dataclass
+class MeasurementSaved(Event):
+    initiator: str | None
+    sequence: int
+    distance: float
+    nlos: int
+    rssi: float
+    fpi: float
+    e_distance: float | None = None

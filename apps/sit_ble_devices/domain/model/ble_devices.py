@@ -25,7 +25,7 @@ class BleClients:
         if id in device_list:
             device_list.remove(id)
         self.json_store.set_value("device_list", device_list)
-        device_list.save()
+        self.json_store.save()
         self.events.append(
             events.BleDeviceUnregistered(device_list=device_list, device=id)
         )
