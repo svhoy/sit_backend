@@ -1,8 +1,9 @@
 from django.db import models
 
 from sit_ble_devices.domain.model import distances
-from .tests import DeviceTests
+
 from .devices import Calibration, UwbDevice
+from .tests import DeviceTests
 
 
 class DistanceMeasurement(models.Model):
@@ -21,8 +22,12 @@ class DistanceMeasurement(models.Model):
         on_delete=models.CASCADE,
         related_name="calibration",
     )
-    initiator = models.ForeignKey(UwbDevice, related_name="initiator")
-    repsonder = models.ForeignKey(UwbDevice, related_name="responder")
+    initiator = models.ForeignKey(
+        UwbDevice, related_name="initiator", on_delete=models.DO_NOTHING
+    )
+    responder = models.ForeignKey(
+        UwbDevice, related_name="responder", on_delete=models.DO_NOTHING
+    )
     sequence = models.IntegerField()
     measurement = models.IntegerField()
     distance = models.FloatField()
@@ -38,16 +43,27 @@ class DistanceMeasurement(models.Model):
     async def from_domain(measurement: distances.DistanceMeasurement):
         test = None
         error_distance = None
+        calibration = None
         if measurement.test_id is not None:
             test = await DeviceTests.objects.aget(id=measurement.test_id)
             if test.real_test_distance is not None:
                 error_distance = measurement.distance - test.real_test_distance
                 measurement.edistance = error_distance
-        else:
-            test = None
-            error_distance = None
+        elif measurement.claibration_id is not None:
+            calibration = await Calibration.objects.aget(
+                id=measurement.claibration_id
+            )
+
+        initiator = await UwbDevice.objects.aget(
+            device_id=measurement.initiator
+        )
+        responder = await UwbDevice.objects.aget(
+            device_id=measurement.responder
+        )
 
         distance_model = await DistanceMeasurement.objects.acreate(
+            initiator=initiator,
+            responder=responder,
             sequence=measurement.sequence,
             measurement=measurement.measurement,
             distance=measurement.distance,
@@ -56,11 +72,14 @@ class DistanceMeasurement(models.Model):
             firstPathIndex=measurement.fpi,
             error_distance=error_distance,
             test=test,
+            calibration=calibration,
         )
         await distance_model.asave()
 
     def to_domain(self) -> distances.DistanceMeasurement:
         d = distances.DistanceMeasurement(
+            initiator=self.initiator,
+            responder=self.responder,
             sequence=self.sequence,
             measurement=self.measurement,
             distance=self.distance,

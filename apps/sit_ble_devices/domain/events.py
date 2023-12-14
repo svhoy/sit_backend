@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, field
 from json import dumps
 
 
@@ -6,10 +6,10 @@ from json import dumps
 class Event:
     @property
     def __dict__(self):
-        dict = {}
-        dict["type"] = self.__class__.__name__
-        dict["data"] = asdict(self)
-        return dict
+        dict_buf = {}
+        dict_buf["type"] = self.__class__.__name__
+        dict_buf["data"] = asdict(self)
+        return dict_buf
 
     @property
     def json(self):
@@ -46,13 +46,13 @@ class BleDeviceUnregistered(Event):
 @dataclass
 class BleDeviceConnectFailed(Event):
     device_id: str
-    reason: str = None
+    reason: str = ""
 
 
 @dataclass
 class BleDeviceConnectError(Event):
     device_id: str
-    reason: str = None
+    reason: str = ""
 
 
 @dataclass
@@ -69,3 +69,45 @@ class MeasurementSaved(Event):
     rssi: float
     fpi: float
     e_distance: float | None = None
+
+
+@dataclass
+class CalibrationCreated(Event):
+    calibration_id: int
+
+
+@dataclass
+class CalibrationInitFinished(Event):
+    calibration_id: int
+    calibration_type: str
+    devices: list[str] = field(default_factory=list)
+
+
+@dataclass
+class CalibrationMeasurementFinished(Event):
+    calibration_id: int
+
+
+@dataclass
+class CalibrationCalcFinished(Event):
+    calibration_id: int
+    result: list[tuple[str, float, float]]
+
+
+@dataclass
+class CalibrationResultsSaved(Event):
+    calibration_id: int
+
+
+@dataclass
+class AddedUwbDevice(Event):
+    device_name: str
+    device_id: str
+
+
+@dataclass
+class AddedAntDelay(Event):
+    calibration_id: int
+    device_id: str
+    tx_ant_dly: float
+    rx_ant_dly: float

@@ -1,7 +1,8 @@
-from . import AbstractRepository
 from sit_ble_devices.domain import events
-from sit_ble_devices.models import DistanceMeasurement as django_model
 from sit_ble_devices.domain.model import distances
+from sit_ble_devices.models import DistanceMeasurement as django_model
+
+from . import AbstractRepository
 
 
 class DistanceMeasurementRepository(AbstractRepository):

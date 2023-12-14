@@ -1,6 +1,8 @@
 class DistanceMeasurement:
     def __init__(
         self,
+        initiator,
+        responder,
         sequence,
         measurement,
         distance,
@@ -13,6 +15,8 @@ class DistanceMeasurement:
     ):
         self.test_id = test_id
         self.claibration_id = calibration_id
+        self.initiator = initiator
+        self.responder = responder
         self.sequence = sequence
         self.measurement = measurement
         self.distance = distance

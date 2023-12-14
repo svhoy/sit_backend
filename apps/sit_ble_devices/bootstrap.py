@@ -1,5 +1,7 @@
 import inspect
+
 from sit_ble_devices.service_layer import uow
+
 from apps.sit_ble_devices.service_layer import messagebus
 from apps.sit_ble_devices.service_layer.handlers import (
     command_handler,
@@ -7,8 +9,13 @@ from apps.sit_ble_devices.service_layer.handlers import (
 )
 
 
-def bootstrap(uow: uow.AbstractUnitOfWork, duow: uow.DistanceUnitOfWork):
-    dependencies = {"uow": uow, "duow": duow}
+def bootstrap(
+    uow: uow.AbstractUnitOfWork,
+    duow: uow.DistanceUnitOfWork,
+    cuow: uow.CalibrationUnitOfWork,
+    uduow: uow.UwbDeviceUnitOfWork,
+):
+    dependencies = {"uow": uow, "duow": duow, "cuow": cuow, "uduow": uduow}
 
     injected_event_handlers = {
         event_type: [
@@ -24,7 +31,12 @@ def bootstrap(uow: uow.AbstractUnitOfWork, duow: uow.DistanceUnitOfWork):
     }
 
     return messagebus.MessageBus(
-        uow, duow, injected_event_handlers, injected_command_handlers
+        uow,
+        duow,
+        cuow,
+        uduow,
+        injected_event_handlers,
+        injected_command_handlers,
     )
 
 
