@@ -17,3 +17,9 @@ class-naming-style='PascalCase'
 
 [tool.pylint.'MESSAGES CONTROL']
 disable = ['I1101', 'C0114', 'C0115', 'C0116']
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
