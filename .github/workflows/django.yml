@@ -25,7 +25,7 @@ jobs:
         pip install -r requirements.txt
     - name: Analysing the code with pylint
       run: |
-        pylint --load-plugins pylint_django --django-settings-module=example.settings $(git ls-files '*.py')
+        pylint --load-plugins pylint_django --django-settings-module=config.settings $(git ls-files '*.py')
 
   black:
     runs-on: windows-2022
