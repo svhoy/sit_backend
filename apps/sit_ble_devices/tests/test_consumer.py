@@ -1,6 +1,5 @@
 # Third Party
 import pytest
-from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from sit_ble_devices.models import DistanceMeasurement
 
@@ -250,7 +249,7 @@ class TestUWBDistanceMeasuring:
                 "state": "start",
                 "test_id": None,
                 "distance": -1,
-            }
+            },
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()
@@ -270,7 +269,7 @@ class TestUWBDistanceMeasuring:
                 "state": "stop",
                 "test_id": None,
                 "distance": -1,
-            }
+            },
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()
@@ -287,10 +286,10 @@ class TestUWBDistanceMeasuring:
         message = {
             "type": "distance_msg",
             "data": {
-                            "state": "scanning",
-            "test_id": None,
-            "distance": 23.2,
-            }
+                "state": "scanning",
+                "test_id": None,
+                "distance": 23.2,
+            },
         }
         await communicator.send_json_to(message)
         response = await communicator.receive_json_from()
