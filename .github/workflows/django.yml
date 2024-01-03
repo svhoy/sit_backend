@@ -33,4 +33,4 @@ jobs:
       - uses: actions/checkout@v2
       - uses: psf/black@stable
         with:
-          options: "--check --verbose --exclude old_test --exclude ^/migrations "
+          options: "--check --verbose --exclude old_test --exclude '*/migrations/*' "
