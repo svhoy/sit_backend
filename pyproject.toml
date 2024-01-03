@@ -1,5 +1,11 @@
 [tool.black]
 line-length=79
+force-exclude = '''
+/(
+  | ^.*\b(migrations)\b.*$
+)/
+
+'''
 
 [tool.isort]
 profile = "black"
