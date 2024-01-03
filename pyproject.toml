@@ -7,7 +7,7 @@ profile = "black"
 #Pylint section
 [tool.pylint]
 [tool.pylint.master]
-ignore='old_test/*.py'
+ignore='old_test/*.py, migrations/*.py'
 
 
 [tool.pylint.'BASIC']
