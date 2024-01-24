@@ -17,8 +17,6 @@ ignore="manage.py"
 ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
 
 
-
-
 [tool.pylint.'BASIC']
 const-naming-style='UPPER_CASE'
 module-naming-style='camelCase'
