@@ -32,7 +32,7 @@ jobs:
         key: venv-${{ hashFiles('poetry.lock') }}
     - name: Install dependencies
       run: |
-        poetry install
+        poetry install --no-interaction
     - name: Analysing the code with pylint
       run: |
         poetry run pylint --load-plugins pylint_django --django-settings-module=config.settings **/*.py
