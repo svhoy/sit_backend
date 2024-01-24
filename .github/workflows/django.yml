@@ -23,7 +23,7 @@ jobs:
         python -m pip install poetry
     - name: Config Poetry & Install dependencies
       run: |
-        poetry config virtualenvs.create true
+        poetry config virtualenvs.create true 
         poetry config virtualenvs.in-project true
     - name: Define a cache for the virtual environment based on the dependencies lock file
       uses: actions/cache@v3
