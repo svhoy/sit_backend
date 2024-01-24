@@ -13,7 +13,10 @@ profile = "black"
 #Pylint section
 [tool.pylint]
 [tool.pylint.master]
-ignore='old_test/*.py, migrations/*.py'
+ignore="manage.py"
+ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
+
+
 
 
 [tool.pylint.'BASIC']
