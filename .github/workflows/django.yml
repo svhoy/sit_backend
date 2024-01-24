@@ -23,7 +23,7 @@ jobs:
         python -m pip install poetry
     - name: Config Poetry & Install dependencies
       run: |
-        poetry config virtualenvs-create true
+        poetry config virtualenvs.create true
         poetry config virtualenvs.in-project true
         poetry install
     - name: Analysing the code with pylint
