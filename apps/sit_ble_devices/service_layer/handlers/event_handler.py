@@ -1,12 +1,11 @@
 import json
 
 from channels.layers import get_channel_layer
-from colorama import deinit
+
 from sit_ble_devices.domain import commands, events
 from sit_ble_devices.domain.model import uwbdevice
+from sit_ble_devices.service_layer import uow
 from sit_ble_devices.service_layer.utils import calibrations
-
-from apps.sit_ble_devices.service_layer import uow
 
 
 async def send_connection_info(event: events.WsClientRegisterd):
@@ -59,7 +58,9 @@ async def send_calibration_created(event: events.CalibrationCreated):
 
 async def send_start_calibration(event: events.CalibrationInitFinished):
     command = commands.StartCalibrationMeasurement(
-        calibration_id=event.calibration_id, devices=event.devices
+        calibration_id=event.calibration_id,
+        measurement_type=event.measurement_type,
+        devices=event.devices,
     )
     send_msg = command.json
     channel_layer = get_channel_layer()
@@ -113,11 +114,13 @@ async def finished_calibration(
 
 
 async def redirect_event(
-    event: events.BleDeviceConnectError
-    | events.BleDeviceConnectFailed
-    | events.CalibrationMeasurementFinished
-    | events.CalibrationCalcFinished
-    | events.CalibrationResultsSaved,
+    event: (
+        events.BleDeviceConnectError
+        | events.BleDeviceConnectFailed
+        | events.CalibrationMeasurementFinished
+        | events.CalibrationCalcFinished
+        | events.CalibrationResultsSaved
+    ),
 ):
     data = event.json
     channel_layer = get_channel_layer()

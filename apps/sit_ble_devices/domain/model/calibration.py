@@ -15,10 +15,17 @@ class CalibrationDistance:
 
 
 class Calibrations:
-    def __init__(self, devices, calibration_id=None, calibration_type=None):
+    def __init__(
+        self,
+        devices,
+        calibration_id=None,
+        calibration_type=None,
+        measurement_type=None,
+    ):
         self.calibration_id = calibration_id
         self.calibration_type = calibration_type
         self.devices = devices
+        self.measurement_type = measurement_type
         self.cali_distances = []
         self.events = []
 
