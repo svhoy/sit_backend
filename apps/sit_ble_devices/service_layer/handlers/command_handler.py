@@ -1,5 +1,4 @@
 from channels.layers import get_channel_layer
-
 from sit_ble_devices.domain import commands, events
 from sit_ble_devices.domain.model import calibration, distances
 from sit_ble_devices.service_layer import uow
@@ -7,14 +6,14 @@ from sit_ble_devices.service_layer.utils import calibrations
 
 
 async def register_ws_client(
-    command: commands.RegisterWsClient, uow: uow.AbstractUnitOfWork
+    command: commands.RegisterWsClient, uow: uow.UnitOfWork
 ):
     async with uow:
         await uow.ws_connection.add_connection(command.client_id)
 
 
 async def unregister_ws_client(
-    command: commands.UnregisterWsClient, uow: uow.AbstractUnitOfWork
+    command: commands.UnregisterWsClient, uow: uow.UnitOfWork
 ):
     async with uow:
         await uow.ws_connection.remove_connections()
@@ -41,6 +40,7 @@ async def save_measurement(
         measurement = distances.DistanceMeasurement(
             initiator=command.initiator,
             responder=command.responder,
+            measurement_type=command.measurement_type,
             sequence=command.sequence,
             measurement=command.measurement,
             distance=command.distance,
@@ -59,6 +59,7 @@ async def save_test_measurement(
         measurement = distances.DistanceMeasurement(
             initiator=command.initiator,
             responder=command.responder,
+            measurement_type=command.measurement_type,
             sequence=command.sequence,
             measurement=command.measurement,
             distance=command.distance,
@@ -78,6 +79,7 @@ async def save_calibration_measurement(
         measurement = distances.DistanceMeasurement(
             initiator=command.initiator,
             responder=command.responder,
+            measurement_type=command.measurement_type,
             sequence=command.sequence,
             measurement=command.measurement,
             distance=command.distance,
@@ -95,7 +97,9 @@ async def create_calibration(
 ):
     async with cuow:
         new_calibration = calibration.Calibrations(
-            calibration_type=command.calibration_type, devices=command.devices
+            calibration_type=command.calibration_type,
+            measurement_type=command.measurement_type,
+            devices=command.devices,
         )
         await cuow.calibration_repo.add(new_calibration)
         await cuow.commit()
@@ -149,11 +153,13 @@ async def start_calibration_calc(
 
 
 async def redirect_command(
-    command: commands.ConnectBleDevice
-    | commands.DisconnectBleDevice
-    | commands.StartDistanceMeasurement
-    | commands.StopDistanceMeasurement
-    | commands.StartTestMeasurement,
+    command: (
+        commands.ConnectBleDevice
+        | commands.DisconnectBleDevice
+        | commands.StartDistanceMeasurement
+        | commands.StopDistanceMeasurement
+        | commands.StartTestMeasurement
+    ),
 ):
     data = command.json
     channel_layer = get_channel_layer()

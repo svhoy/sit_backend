@@ -1,3 +1,5 @@
+from unittest.util import _MAX_LENGTH
+
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -11,6 +13,7 @@ class DeviceTestGroups(models.Model):
     test_name = models.CharField(max_length=100, unique=True)
     test_description = models.CharField(max_length=300, blank=True, null=True)
     test_type = models.CharField(max_length=30)
+    test_measurement_type = models.CharField(max_length=30)
     test_distance = models.FloatField(
         validators=[MinValueValidator(0.0)], null=True, blank=True
     )

@@ -35,9 +35,10 @@ class Calibration(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)
     type = models.CharField(max_length=30)
+    measurement_type = models.CharField(max_length=30)
     temperature = models.IntegerField(blank=True, null=True)
     iterations = models.IntegerField(default=100)
-    devices = models.ManyToManyField(UwbDevice, blank=True, null=True)
+    devices = models.ManyToManyField(UwbDevice, blank=True)
     comments = models.CharField(max_length=300, blank=True, null=True)
 
     class Meta:

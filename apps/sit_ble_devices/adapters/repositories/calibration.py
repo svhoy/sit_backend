@@ -36,6 +36,7 @@ class CalibrationRepository(AbstractRepository):
             events.CalibrationInitFinished(
                 calibration_id=calibration_domain.calibration_id,
                 calibration_type=calibration_domain.calibration_type,
+                measurement_type=calibration_domain.measurement_type,
                 devices=calibration_domain.devices,
             )
         )

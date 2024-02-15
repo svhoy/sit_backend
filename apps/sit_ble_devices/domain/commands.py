@@ -50,6 +50,7 @@ class UnregisterBleConnection(Command):
 @dataclass
 class CreateCalibration(Command):
     calibration_type: str
+    measurement_type: str
     devices: list[str]
 
 
@@ -68,6 +69,7 @@ class StartCalibrationCalc(Command):
 class StartDistanceMeasurement(Command):
     initiator: str
     responder: str
+    measurement_type: str
 
 
 @dataclass
@@ -79,6 +81,7 @@ class StopDistanceMeasurement(Command):
 class SaveMesurement(Command):
     initiator: str
     responder: str
+    measurement_type: str
     sequence: int
     measurement: int
     distance: float
@@ -92,6 +95,7 @@ class StartTestMeasurement(Command):
     test_id: int
     initiator: str
     responder: list[str]
+    measurement_type: str
     min_measurement: int
     max_measurement: int
     rx_ant_dly: int = 0
@@ -108,6 +112,7 @@ class SaveTestMeasurement(Command):
     test_id: int
     initiator: str
     responder: str
+    measurement_type: str
     sequence: int
     measurement: int
     distance: float
@@ -120,6 +125,9 @@ class SaveTestMeasurement(Command):
 class StartCalibrationMeasurement(Command):
     calibration_id: int
     devices: list[str]
+    measurement_type: str = (
+        "ds_3_twr"  # set ds-twr to default because it is the better way to measure distance
+    )
     max_measurement: int = 200
     rx_ant_dly: int = 0
     tx_ant_dly: int = 0
@@ -130,6 +138,7 @@ class SaveCalibrationMeasurement(Command):
     calibration_id: int
     initiator: str
     responder: str
+    measurement_type: str
     sequence: int
     measurement: int
     distance: float

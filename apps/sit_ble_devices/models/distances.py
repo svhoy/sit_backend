@@ -1,5 +1,4 @@
 from django.db import models
-
 from sit_ble_devices.domain.model import distances
 
 from .devices import Calibration, UwbDevice
@@ -28,6 +27,7 @@ class DistanceMeasurement(models.Model):
     responder = models.ForeignKey(
         UwbDevice, related_name="responder", on_delete=models.DO_NOTHING
     )
+    measurement_type = models.CharField(max_length=30)
     sequence = models.IntegerField()
     measurement = models.IntegerField()
     distance = models.FloatField()
@@ -64,6 +64,7 @@ class DistanceMeasurement(models.Model):
         distance_model = await DistanceMeasurement.objects.acreate(
             initiator=initiator,
             responder=responder,
+            measurement_type=measurement.measurement_type,
             sequence=measurement.sequence,
             measurement=measurement.measurement,
             distance=measurement.distance,
@@ -81,6 +82,7 @@ class DistanceMeasurement(models.Model):
             initiator=self.initiator,
             responder=self.responder,
             sequence=self.sequence,
+            measurement_type=self.measurement_type,
             measurement=self.measurement,
             distance=self.distance,
             nlos=self.nlos,

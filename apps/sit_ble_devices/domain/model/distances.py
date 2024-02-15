@@ -3,6 +3,7 @@ class DistanceMeasurement:
         self,
         initiator,
         responder,
+        measurement_type,
         sequence,
         measurement,
         distance,
@@ -17,6 +18,7 @@ class DistanceMeasurement:
         self.claibration_id = calibration_id
         self.initiator = initiator
         self.responder = responder
+        self.measurement_type = measurement_type
         self.sequence = sequence
         self.measurement = measurement
         self.distance = distance

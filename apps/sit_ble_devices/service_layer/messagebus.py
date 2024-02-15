@@ -34,7 +34,7 @@ class MessageBus:
                 self.queue.extend(self.cuow.collect_calibration_events())
                 self.queue.extend(self.uduow.collect_uwb_device_events())
             except Exception:
-                print("Exception handling event %s", event)
+                print(f"Exception handling event: {event}")
                 continue
 
     async def handle_command(self, command):
@@ -47,4 +47,4 @@ class MessageBus:
             self.queue.extend(self.uduow.collect_uwb_device_events())
 
         except Exception:
-            print("Exception handling command %s", command)
+            print(f"Exception handling command: {command}")

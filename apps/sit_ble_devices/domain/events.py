@@ -80,6 +80,7 @@ class CalibrationCreated(Event):
 class CalibrationInitFinished(Event):
     calibration_id: int
     calibration_type: str
+    measurement_type: str
     devices: list[str] = field(default_factory=list)
 
 
