@@ -1,36 +1,4 @@
-[tool.black]
-line-length=79
-force-exclude = '''
-/(
-  | ^.*\b(migrations)\b.*$
-)/
-
-'''
-
-[tool.isort]
-profile = "black"
-
-#Pylint section
-[tool.pylint]
-[tool.pylint.master]
-ignore="manage.py"
-ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
-
-
-[tool.pylint.'BASIC']
-const-naming-style='UPPER_CASE'
-module-naming-style='camelCase'
-class-naming-style='PascalCase'
-
-[tool.pylint.'MESSAGES CONTROL']
-disable = ['I1101', 'C0114', 'C0115', 'C0116']
-
-[tool.mypy]
-plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
-
-[tool.django-stubs]
-django_settings_module = "config.settings"
-
+# Poetry section
 [tool.poetry]
 name = "sit-backend"
 version = "0.1.0"
@@ -68,3 +36,43 @@ pylint-django = "^2.5.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+# Style and Linting Configuration	
+#black section
+[tool.black]
+line-length=79
+force-exclude = '''
+/(
+  | ^.*\b(migrations)\b.*$
+)/
+
+'''
+#isort section
+[tool.isort]
+profile = "black"
+
+#Pylint section
+[tool.pylint]
+
+[tool.pylint.main]
+disable = ['I1101', 'C0114', 'C0115', 'C0116', 'W1203']
+ignore="manage.py"
+ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
+
+[tool.pylint.basic]
+const-naming-style='UPPER_CASE'
+module-naming-style='camelCase'
+class-naming-style='PascalCase'
+
+[tool.pylint.logging]
+logging-format-style = "new"
+
+# MyPy section
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+
