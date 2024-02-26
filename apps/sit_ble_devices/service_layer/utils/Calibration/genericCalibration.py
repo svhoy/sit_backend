@@ -1,34 +1,31 @@
+import logging
+
 import numpy as np
-from sit_ble_devices.domain.model import calibration
-from sit_ble_devices.service_layer.utils.Calibration.calibration import (
-    CalibrationBase,
-)
+
+from .calibration import CalibrationBase
+
+# create logger
+logger = logging.getLogger("service_layer.calibration.classes")
 
 
 class DecaCalibration(CalibrationBase):
-    def __init__(self, calibration_dom: calibration.Calibrations):
-        self.iterations = 100
-        self.avg_distance = []
-        self.real_distance = []
-        self.edm_measured = np.matrix([])
-        self.edm_real = np.matrix([])
-        self.events = []
-        self.inital_delay = 513e-9
-        self.perturbation_limit = 0.2e-9
-        self.num_candidates = 1000
-        super().__init__(calibration_dom)
+    def __init__(self, device_list, *args, **kwargs):
+        self.iterations = kwargs.get("iterations", 100)
+        self.inital_delay = kwargs.get("inital_delay", 513e-9)
+        self.perturbation_limit = kwargs.get("perturbation_limit", 0.2e-9)
+        self.num_candidates = kwargs.get("num_candidates", 1000)
+        super().__init__(device_list, *args, **kwargs)
 
-    async def calibration_calc(self):
+    async def start_calibration_calc(self):
         candidates = np.zeros((self.num_candidates, 4))
         best_canidate = []
-        self.setup_edms()
         for i in range(self.iterations):
-            print("Running")
+            logger.debug("Running")
             candidates = await self.populate_candidates(i, candidates)
             candidates = await self.evaluate_candidates(candidates)
 
         best_canidate = candidates[0]
-        return await self.calc_delays(best_canidate)
+        return best_canidate[:3]
 
     async def populate_candidates(
         self, iteration: int, candidates: np.ndarray
@@ -76,56 +73,13 @@ class DecaCalibration(CalibrationBase):
                         ) / 4.0
                     else:
                         edm_candidate[i, j] = 0
-                # print(f"Kandidaten Matrix {edm_candidate}")
                 norm_diff = np.linalg.norm(self.edm_real - edm_candidate)
                 candidates[index, 3] = norm_diff
-                # print(f"Differnz Norm: {norm_diff}")
-                # print(f"Candidate: {candidate}")
 
         sorted_indices = np.argsort(candidates[:, 3])
         sorted_candidates = candidates[sorted_indices]
-        # print(f"Sorted Candidate: {sorted_candidates}")
+        logger.debug(f"Sorted Candidate: {sorted_candidates}")
         return sorted_candidates
 
     async def find_best_candidate(self, candidates: np.ndarray):
         return candidates[0]
-
-    # Utils Functions to convert distance data to tof and matrix
-    async def setup_edms(self):
-        for initiator in self.calibration.devices:
-            for responder in self.calibration.devices:
-                if responder != initiator:
-                    distances = await self.get_distances(
-                        self.calibration.calibration_id, initiator, responder
-                    )
-                    avg_distance = np.mean(distances)
-                    avg_distance = self.convert_distance_to_tof(avg_distance)
-                    self.avg_distance.append(avg_distance)
-
-                    real_distance = self.get_real_distance(
-                        self.calibration.calibration_id, initiator, responder
-                    )
-                    real_distance = self.convert_distance_to_tof(real_distance)
-                    self.real_distance.append(real_distance)
-                else:
-                    self.avg_distance.append(0)
-                    self.real_distance.append(0)
-
-        self.edm_measured = self.convert_list_to_matrix(self.avg_distance)
-        self.edm_real = self.convert_list_to_matrix(self.real_distance)
-
-    async def convert_distance_to_tof(self, distances: float) -> float:
-        return (1 / 299702547) * distances
-
-    async def convert_list_to_matrix(self, distance_list) -> np.ndarray:
-        len_devices = len(self.calibration.devices)
-        matrix = np.empty((len_devices, len_devices))
-        zeile = 0
-        for list_index in enumerate(distance_list):
-            spalte = list_index % len_devices
-            if spalte == 0 and list_index != 0:
-                zeile += 1
-
-            matrix[zeile, spalte] = distance_list[list_index]
-
-        return matrix
