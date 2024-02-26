@@ -1,7 +1,6 @@
 import json
 
 from channels.layers import get_channel_layer
-
 from sit_ble_devices.domain import commands, events
 from sit_ble_devices.domain.model import uwbdevice
 from sit_ble_devices.service_layer import uow
