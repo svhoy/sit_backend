@@ -85,9 +85,13 @@ class SaveMesurement(Command):
     sequence: int
     measurement: int
     distance: float
-    nlos: int
-    rssi: float
-    fpi: float
+    time_round_1: float
+    time_round_2: float
+    time_reply_1: float
+    time_reply_2: float
+    nlos_final: int
+    rssi_final: float
+    fpi_final: float
 
 
 @dataclass
@@ -116,9 +120,13 @@ class SaveTestMeasurement(Command):
     sequence: int
     measurement: int
     distance: float
-    nlos: int
-    rssi: float
-    fpi: float
+    time_round_1: float
+    time_round_2: float
+    time_reply_1: float
+    time_reply_2: float
+    nlos_final: int
+    rssi_final: float
+    fpi_final: float
 
 
 @dataclass
@@ -142,9 +150,14 @@ class SaveCalibrationMeasurement(Command):
     sequence: int
     measurement: int
     distance: float
-    nlos: int
-    rssi: float
-    fpi: float
+    time_round_1: float
+    time_round_2: float
+    time_reply_1: float
+    time_reply_2: float
+    nlos_final: int
+    rssi_final: float
+    fpi_final: float
+
 
 
 @dataclass
