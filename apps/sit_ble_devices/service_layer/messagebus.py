@@ -1,4 +1,8 @@
+import logging
+
 from sit_ble_devices.domain import commands, events
+
+logger = logging.getLogger("service_layer.messagebus")
 
 
 class MessageBus:
@@ -11,6 +15,7 @@ class MessageBus:
         self.uduow = uduow
         self.event_handlers = event_handlers
         self.command_handlers = command_handlers
+        self.queue = []
 
     async def handle(self, message):
         self.queue = [message]
@@ -19,7 +24,7 @@ class MessageBus:
             if isinstance(message, events.Event):
                 await self.handle_event(message)
             elif isinstance(message, commands.Command):
-                print(f"Message Queue: {message}")
+                logger.info(f"Message Queue: {message}")
                 await self.handle_command(message)
             else:
                 raise ValueError(f"{message} was not an Event or Command")
@@ -34,7 +39,7 @@ class MessageBus:
                 self.queue.extend(self.cuow.collect_calibration_events())
                 self.queue.extend(self.uduow.collect_uwb_device_events())
             except Exception:
-                print(f"Exception handling event: {event}")
+                logger.error(f"Exception handling event: {event}")
                 continue
 
     async def handle_command(self, command):
@@ -47,4 +52,4 @@ class MessageBus:
             self.queue.extend(self.uduow.collect_uwb_device_events())
 
         except Exception:
-            print(f"Exception handling command: {command}")
+            logger.error(f"Exception handling command: {command}")
