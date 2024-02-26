@@ -1,17 +1,17 @@
 # Standard Library
 import importlib.util
 import json
+import logging
 import pkgutil
-
-from asgiref.sync import sync_to_async
 
 # Third Party
 from channels.generic.websocket import AsyncWebsocketConsumer
-
 from sit_ble_devices import bootstrap
 from sit_ble_devices.domain import commands
-from sit_ble_devices.models import DeviceTests, DistanceMeasurement
 from sit_ble_devices.service_layer import uow
+
+# create logger
+logger = logging.getLogger("consumer")
 
 bus = bootstrap.bootstrap(
     uow=uow.UnitOfWork(),
@@ -48,7 +48,7 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        print(data)
+        logger.debug(f"Recived Date: {data}")
         message = self.create_dataclass_instance(data["type"], data["data"])
         await bus.handle(message)
 
@@ -91,103 +91,103 @@ class BleDeviceConsumer(AsyncWebsocketConsumer):
 
         return dataclasses
 
-    ##########################################################
-    ##########################################################
-    ##########################################################
-    # TODO: OLD Functions should be replaced in event handler
+    # ##########################################################
+    # ##########################################################
+    # ##########################################################
+    # # TODO: OLD Functions should be replaced in event handler
 
-    # Distance Messages
-    async def handle_distance_msg(self, data, setup=None):
-        match data:
-            case {
-                "state": "start" as state,
-                "test_id": test_id,
-            }:
-                self._test_id = test_id
-                if setup is None:
-                    setup = await sync_to_async(self.set_setup)(
-                        data["test_id"]
-                    )
-                data = {"state": state, "test_id": test_id}
-                await self.send_distance(data, setup)
-            case {
-                "state": "stop" as state,
-                "test_id": test_id,
-            }:
-                self._test_id = None
-                data = {"state": state, "test_id": test_id}
-                print("Test")
-                await self.send_distance(data)
-            case {
-                "state": "scanning" as state,
-                "test_id": test_id,
-                "sequence": sequence,
-                "distance": distance,
-                "nlos": nlos,
-                "rssi": rssi,
-                "fpi": fpi,
-            }:
-                error_distance = await sync_to_async(self.save_distance)(
-                    test_id,
-                    sequence,
-                    distance,
-                    nlos,
-                    rssi,
-                    fpi,
-                )
-                data = {
-                    "state": state,
-                    "test_id": test_id,
-                    "sequence": sequence,
-                    "distance": distance,
-                    "nlos": nlos,
-                    "rssi": rssi,
-                    "fpi": fpi,
-                    "error_distance": error_distance,
-                }
-                await self.send_distance(data, setup)
+    # # Distance Messages
+    # async def handle_distance_msg(self, data, setup=None):
+    #     match data:
+    #         case {
+    #             "state": "start" as state,
+    #             "test_id": test_id,
+    #         }:
+    #             self._test_id = test_id
+    #             if setup is None:
+    #                 setup = await sync_to_async(self.set_setup)(
+    #                     data["test_id"]
+    #                 )
+    #             data = {"state": state, "test_id": test_id}
+    #             await self.send_distance(data, setup)
+    #         case {
+    #             "state": "stop" as state,
+    #             "test_id": test_id,
+    #         }:
+    #             self._test_id = None
+    #             data = {"state": state, "test_id": test_id}
+    #             print("Test")
+    #             await self.send_distance(data)
+    #         case {
+    #             "state": "scanning" as state,
+    #             "test_id": test_id,
+    #             "sequence": sequence,
+    #             "distance": distance,
+    #             "nlos": nlos,
+    #             "rssi": rssi,
+    #             "fpi": fpi,
+    #         }:
+    #             error_distance = await sync_to_async(self.save_distance)(
+    #                 test_id,
+    #                 sequence,
+    #                 distance,
+    #                 nlos,
+    #                 rssi,
+    #                 fpi,
+    #             )
+    #             data = {
+    #                 "state": state,
+    #                 "test_id": test_id,
+    #                 "sequence": sequence,
+    #                 "distance": distance,
+    #                 "nlos": nlos,
+    #                 "rssi": rssi,
+    #                 "fpi": fpi,
+    #                 "error_distance": error_distance,
+    #             }
+    #             await self.send_distance(data, setup)
 
-    def set_setup(self, test_id):
-        test = DeviceTests.objects.get(pk=test_id)
-        setup = {
-            "initiator_device": test.initiator_device.device_id,
-            "responder_device": test.responder_device.device_id,
-        }
-        return setup
+    # def set_setup(self, test_id):
+    #     test = DeviceTests.objects.get(pk=test_id)
+    #     setup = {
+    #         "initiator_device": test.initiator_device.device_id,
+    #         "responder_device": test.responder_device.device_id,
+    #     }
+    #     return setup
 
-    def save_distance(self, test_id, sequence, distance, nlos, rssi, fpi):
-        device_test = None
-        error_distance = None
-        if test_id is not None:
-            device_test = DeviceTests.objects.get(id=test_id)
-            if device_test.real_test_distance is not None:
-                error_distance = distance - device_test.real_test_distance
-        distance_model = DistanceMeasurement.objects.create(
-            test=device_test,
-            sequence=sequence,
-            distance=distance,
-            nlos=nlos,
-            RecivedSignalStrengthIndex=rssi,
-            firstPathIndex=fpi,
-            error_distance=error_distance,
-        )
-        distance_model.save()
-        return error_distance
+    # def save_distance(self, test_id, sequence, distance, nlos, rssi, fpi):
+    #     device_test = None
+    #     error_distance = None
+    #     if test_id is not None:
+    #         device_test = DeviceTests.objects.get(id=test_id)
+    #         if device_test.real_test_distance is not None:
+    #             error_distance = distance - device_test.real_test_distance
+    #     distance_model = DistanceMeasurement.objects.create(
+    #         test=device_test,
+    #         sequence=sequence,
+    #         distance=distance,
+    #         nlos=nlos,
+    #         RecivedSignalStrengthIndex=rssi,
+    #         firstPathIndex=fpi,
+    #         error_distance=error_distance,
+    #     )
+    #     distance_model.save()
+    #     return error_distance
 
-    async def send_distance(
-        self,
-        data,
-        setup=None,
-    ):
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {"type": "distance_msg", "data": data, "setup": setup},
-        )
+    # async def send_distance(
+    #     self,
+    #     data,
+    #     setup=None,
+    # ):
+    #     await self.channel_layer.group_send(
+    #         self.room_group_name,
+    #         {"type": "distance_msg", "data": data, "setup": setup},
+    #     )
 
-    async def distance_msg(self, event):
-        data = event["data"]
-        setup = event["setup"]
-        msg = json.dumps(
-            {"type": "distance_msg", "data": data, "setup": setup}
-        )
-        await self.send(text_data=msg)
+    # async def distance_msg(self, event):
+    #     data = event["data"]
+    #     setup = event["setup"]
+    #     msg = json.dumps(
+    #         {"type": "distance_msg", "data": data, "setup": setup}
+    #     )
+    #     await self.send(text_data=msg)
