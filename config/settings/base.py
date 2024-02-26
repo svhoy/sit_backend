@@ -242,6 +242,10 @@ LOGGING = {
             "handlers": ["console_self"],
             "level": "INFO",
         },
+        "service_layer.uow": {
+            "handlers": ["console_self"],
+            "level": "INFO",
+        },
         "service_layer.handler": {
             "handlers": ["console_self"],
             "level": "INFO",
