@@ -43,8 +43,14 @@ class CalibrationRepository(AbstractRepository):
 
     async def get_by_id(self, cali_id) -> calibration.Calibrations:
         model = await django_model.objects.aget(id=cali_id)
-        print(f"Calibration Model: {model}")
-        return await model.to_domain()
+        domain_model = await model.to_domain()
+        domain_model.append_cali_distances(
+            d.to_domain()
+            for d in django_cali_dist_model.objects.filter(
+                calibration_mod__pk=cali_id
+            )
+        )
+        return domain_model
 
     def list(self):
         return [d.to_domain() for d in django_model.objects.all()]

@@ -31,9 +31,15 @@ class DistanceMeasurement(models.Model):
     sequence = models.IntegerField()
     measurement = models.IntegerField()
     distance = models.FloatField()
+    time_round_1 = models.FloatField()
+    time_round_2 = models.FloatField()
+    time_reply_1 = models.FloatField()
+    time_reply_2 = models.FloatField()
     nlos = models.IntegerField(blank=True, null=True)
-    RecivedSignalStrengthIndex = models.FloatField(blank=True, null=True)
-    firstPathIndex = models.FloatField(blank=True, null=True)
+    recived_signal_strength_index_final = models.FloatField(
+        blank=True, null=True
+    )
+    first_path_index_final = models.FloatField(blank=True, null=True)
     error_distance = models.FloatField(blank=True, null=True)
 
     class Meta:
@@ -53,24 +59,26 @@ class DistanceMeasurement(models.Model):
             calibration = await Calibration.objects.aget(
                 id=measurement.claibration_id
             )
-
         initiator = await UwbDevice.objects.aget(
             device_id=measurement.initiator
         )
         responder = await UwbDevice.objects.aget(
             device_id=measurement.responder
         )
-
         distance_model = await DistanceMeasurement.objects.acreate(
-            initiator=initiator,
-            responder=responder,
+            initiator=initiator_id,
+            responder=responder_id,
             measurement_type=measurement.measurement_type,
             sequence=measurement.sequence,
             measurement=measurement.measurement,
             distance=measurement.distance,
-            nlos=measurement.nlos,
-            RecivedSignalStrengthIndex=measurement.rssi,
-            firstPathIndex=measurement.fpi,
+            time_round_1=measurement.time_round_1,
+            time_round_2=measurement.time_round_2,
+            time_reply_1=measurement.time_reply_1,
+            time_reply_2=measurement.time_reply_2,
+            nlos=measurement.nlos_final,
+            recived_signal_strength_index_final=measurement.rssi_final,
+            first_path_index_final=measurement.fpi_final,
             error_distance=error_distance,
             test=test,
             calibration=calibration,
@@ -79,15 +87,19 @@ class DistanceMeasurement(models.Model):
 
     def to_domain(self) -> distances.DistanceMeasurement:
         d = distances.DistanceMeasurement(
-            initiator=self.initiator,
-            responder=self.responder,
+            initiator_id=self.initiator.device_id,
+            responder_id=self.responder.device_id,
             sequence=self.sequence,
             measurement_type=self.measurement_type,
             measurement=self.measurement,
             distance=self.distance,
-            nlos=self.nlos,
-            rssi=self.RecivedSignalStrengthIndex,
-            fpi=self.firstPathIndex,
+            time_round_1=self.time_round_1,
+            time_round_2=self.time_round_2,
+            time_reply_1=self.time_reply_1,
+            time_reply_2=self.time_reply_2,
+            nlos_final=self.nlos,
+            rssi_final=self.recived_signal_strength_index_final,
+            fpi_final=self.first_path_index_final,
             edistance=self.error_distance,
         )
         return d

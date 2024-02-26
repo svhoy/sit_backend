@@ -2,7 +2,6 @@ from channels.layers import get_channel_layer
 from sit_ble_devices.domain import commands, events
 from sit_ble_devices.domain.model import calibration, distances
 from sit_ble_devices.service_layer import uow
-from sit_ble_devices.service_layer.utils import calibrations
 
 
 async def register_ws_client(
@@ -44,11 +43,16 @@ async def save_measurement(
             sequence=command.sequence,
             measurement=command.measurement,
             distance=command.distance,
-            nlos=command.nlos,
-            rssi=command.rssi,
-            fpi=command.fpi,
+            time_round_1=command.time_round_1,
+            time_round_2=command.time_round_2,
+            time_reply_1=command.time_reply_1,
+            time_reply_2=command.time_reply_2,
+            nlos_final=command.nlos_final,
+            rssi_final=command.rssi_final,
+            fpi_final=command.fpi_final,
         )
         await duow.distance_measurement.add(measurement)
+
         await duow.commit()
 
 
@@ -63,9 +67,13 @@ async def save_test_measurement(
             sequence=command.sequence,
             measurement=command.measurement,
             distance=command.distance,
-            nlos=command.nlos,
-            rssi=command.rssi,
-            fpi=command.fpi,
+            time_round_1=command.time_round_1,
+            time_round_2=command.time_round_2,
+            time_reply_1=command.time_reply_1,
+            time_reply_2=command.time_reply_2,
+            nlos_final=command.nlos_final,
+            rssi_final=command.rssi_final,
+            fpi_final=command.fpi_final,
             test_id=command.test_id,
         )
         await duow.distance_measurement.add(measurement)
@@ -83,9 +91,13 @@ async def save_calibration_measurement(
             sequence=command.sequence,
             measurement=command.measurement,
             distance=command.distance,
-            nlos=command.nlos,
-            rssi=command.rssi,
-            fpi=command.fpi,
+            time_round_1=command.time_round_1,
+            time_round_2=command.time_round_2,
+            time_reply_1=command.time_reply_1,
+            time_reply_2=command.time_reply_2,
+            nlos_final=command.nlos_final,
+            rssi_final=command.rssi_final,
+            fpi_final=command.fpi_final,
             calibration_id=command.calibration_id,
         )
         await duow.distance_measurement.add(measurement)
@@ -136,16 +148,26 @@ async def add_calibration_distances(
 
 
 async def start_calibration_calc(
-    command: commands.StartCalibrationCalc, cuow: uow.CalibrationUnitOfWork
+    command: commands.StartCalibrationCalc,
+    cuow: uow.CalibrationUnitOfWork,
+    duow: uow.DistanceUnitOfWork,
 ):
+    calibration_dom: calibration.Calibrations
+    distance_list: list[distances.DistanceMeasurement]
+    async with duow:
+        distance_list = await duow.distance_measurement.get_by_calibration_id(
+            command.calibration_id
+        )
+
     async with cuow:
         calibration_dom = await cuow.calibration_repo.get_by_id(
             cali_id=command.calibration_id
         )
-        result = await calibrations.start_calibration(calibration_dom)
+        calibration_dom.append_distances(distance_list)
+        result = calibration_dom.start_calibration(calibration_dom)
         cuow.calibration_repo.seen.add(calibration_dom)
         calibration_dom.events.append(
-            events.CalibrationFinished(
+            events.CalibrationCalcFinished(
                 calibration_id=calibration_dom.calibration_id,
                 result=result,
             )
