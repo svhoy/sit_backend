@@ -203,3 +203,63 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+        "console_self": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "consumer": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "domain.model.calibration": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "service_layer": {
+            "handlers": ["console_self"],
+            "level": "INFO",
+        },
+        "service_layer.utils": {
+            "handlers": ["console_self"],
+            "level": "INFO",
+        },
+        "service_layer.messagebus": {
+            "handlers": ["console_self"],
+            "level": "INFO",
+        },
+        "service_layer.handler": {
+            "handlers": ["console_self"],
+            "level": "INFO",
+        },
+        "service_layer.calibration": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "service_layer.calibration.classes": {
+            "handlers": ["console_self"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s: %(message)s",
+        },
+    },
+}
