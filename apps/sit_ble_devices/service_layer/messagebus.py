@@ -35,9 +35,9 @@ class MessageBus:
             try:
                 await handler(event)
                 self.queue.extend(self.uow.collect_new_events())
-                self.queue.extend(self.duow.collect_distance_events())
-                self.queue.extend(self.cuow.collect_calibration_events())
-                self.queue.extend(self.uduow.collect_uwb_device_events())
+                self.queue.extend(self.duow.collect_new_events())
+                self.queue.extend(self.cuow.collect_new_events())
+                self.queue.extend(self.uduow.collect_new_events())
             except Exception:
                 logger.error(f"Exception handling event: {event}")
                 continue
@@ -47,9 +47,9 @@ class MessageBus:
         try:
             await handler(command)
             self.queue.extend(self.uow.collect_new_events())
-            self.queue.extend(self.duow.collect_distance_events())
-            self.queue.extend(self.cuow.collect_calibration_events())
-            self.queue.extend(self.uduow.collect_uwb_device_events())
+            self.queue.extend(self.duow.collect_new_events())
+            self.queue.extend(self.cuow.collect_new_events())
+            self.queue.extend(self.uduow.collect_new_events())
 
         except Exception:
             logger.error(f"Exception handling command: {command}")

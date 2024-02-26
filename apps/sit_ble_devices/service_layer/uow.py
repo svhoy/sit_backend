@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import abc
+import logging
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
-
 from sit_ble_devices.adapters.repositories.calibration import (
     CalibrationRepository,
 )
@@ -14,6 +14,8 @@ from sit_ble_devices.adapters.repositories.distances import (
 )
 from sit_ble_devices.domain.model.ble_devices import BleClients
 from sit_ble_devices.domain.model.ws_clients import WsClients
+
+logger = logging.getLogger("service_layer.uow")
 
 
 class AbstractUnitOfWork(abc.ABC):
@@ -30,10 +32,7 @@ class AbstractUnitOfWork(abc.ABC):
         await self.rollback()
 
     def collect_new_events(self):
-        while self.ws_connection.events:
-            yield self.ws_connection.events.pop(0)
-        while self.ble_devices.events:
-            yield self.ble_devices.events.pop(0)
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def commit(self):
@@ -52,6 +51,12 @@ class UnitOfWork(AbstractUnitOfWork):
 
     async def __aexit__(self, *args):
         await super().__aexit__(*args)
+
+    def collect_new_events(self):
+        while self.ws_connection.events:
+            yield self.ws_connection.events.pop(0)
+        while self.ble_devices.events:
+            yield self.ble_devices.events.pop(0)
 
     async def commit(self):
         await self._commit()
@@ -79,13 +84,13 @@ class DistanceUnitOfWork(AbstractUnitOfWork):
     async def rollback(self):
         sync_to_async(transaction.rollback)
 
-    def collect_distance_events(self):
+    def collect_new_events(self):
         try:
             for measurement in self.distance_measurement.seen:
                 while measurement.events:
                     yield measurement.events.pop(0)
         except AttributeError:
-            print("Error while collecting Distance Events")
+            logger.debug("Error while collecting Distance Events")
 
 
 class CalibrationUnitOfWork(AbstractUnitOfWork):
@@ -104,13 +109,13 @@ class CalibrationUnitOfWork(AbstractUnitOfWork):
     async def rollback(self):
         sync_to_async(transaction.rollback)
 
-    def collect_calibration_events(self):
+    def collect_new_events(self):
         try:
             for calibration in self.calibration_repo.seen:
                 while calibration.events:
                     yield calibration.events.pop(0)
         except AttributeError:
-            print("Error while collecting Calibration Events")
+            logger.debug("Error while collecting Calibration Events")
 
 
 class UwbDeviceUnitOfWork(AbstractUnitOfWork):
@@ -129,10 +134,10 @@ class UwbDeviceUnitOfWork(AbstractUnitOfWork):
     async def rollback(self):
         sync_to_async(transaction.rollback)
 
-    def collect_uwb_device_events(self):
+    def collect_new_events(self):
         try:
             for device in self.uwb_device_repo.seen:
                 while device.events:
                     yield device.events.pop(0)
         except AttributeError:
-            print("Error while collecting UWB Device Events")
+            logger.debug("Error while collecting UWB Device Events")
