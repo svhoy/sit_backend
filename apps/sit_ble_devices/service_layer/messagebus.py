@@ -24,7 +24,7 @@ class MessageBus:
             if isinstance(message, events.Event):
                 await self.handle_event(message)
             elif isinstance(message, commands.Command):
-                logger.info(f"Message Queue: {message}")
+                logger.debug(f"Message Queue: {message}")
                 await self.handle_command(message)
             else:
                 raise ValueError(f"{message} was not an Event or Command")
