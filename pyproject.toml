@@ -63,6 +63,7 @@ ignore="manage.py"
 ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
 max-attributes=20
 max-locals=20
+fail-under=9.5
 
 [tool.pylint.logging]
 logging-format-style = "new"
