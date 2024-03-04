@@ -60,14 +60,14 @@ class DistanceMeasurement(models.Model):
                 id=measurement.claibration_id
             )
         initiator = await UwbDevice.objects.aget(
-            device_id=measurement.initiator
+            device_id=measurement.initiator_id
         )
         responder = await UwbDevice.objects.aget(
-            device_id=measurement.responder
+            device_id=measurement.responder_id
         )
         distance_model = await DistanceMeasurement.objects.acreate(
-            initiator=initiator_id,
-            responder=responder_id,
+            initiator=initiator,
+            responder=responder,
             measurement_type=measurement.measurement_type,
             sequence=measurement.sequence,
             measurement=measurement.measurement,

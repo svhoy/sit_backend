@@ -1,19 +1,19 @@
-from django_filters.rest_framework import DjangoFilterBackend
+# pylint: disable=too-many-ancestors
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from .models import (
-    UwbDevice,
     DeviceTestGroups,
     DeviceTests,
     DistanceMeasurement,
+    UwbDevice,
 )
 from .premissions import IsOwnerOrReadOnly
 from .serializers import (
-    UwbDeviceSerializer,
     DeviceTestGroupsSerializer,
     DeviceTestsSerializer,
     DistanceMeasurementSerializer,
+    UwbDeviceSerializer,
 )
 
 

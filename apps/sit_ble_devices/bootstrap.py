@@ -31,12 +31,12 @@ def bootstrap(
     }
 
     return messagebus.MessageBus(
-        uow,
-        duow,
-        cuow,
-        uduow,
-        injected_event_handlers,
-        injected_command_handlers,
+        uow=uow,
+        duow=duow,
+        cuow=cuow,
+        uduow=uduow,
+        event_handlers=injected_event_handlers,
+        command_handlers=injected_command_handlers,
     )
 
 
@@ -47,4 +47,6 @@ def inject_dependencies(handler, dependencies):
         for name, dependency in dependencies.items()
         if name in params
     }
-    return lambda message: handler(message, **deps)
+    return lambda message: handler(
+        message, **deps
+    )  # pylint: disable=unnecessary-lambda

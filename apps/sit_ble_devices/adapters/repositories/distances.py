@@ -6,25 +6,25 @@ from . import AbstractRepository
 
 
 class DistanceMeasurementRepository(AbstractRepository):
-    async def add(self, measurement: distances.DistanceMeasurement):
-        await django_model.from_domain(measurement=measurement)
-        self.seen.add(measurement)
-        measurement.events.append(
+    async def add(self, domain_model: distances.DistanceMeasurement):
+        await django_model.from_domain(measurement=domain_model)
+        self.seen.add(domain_model)
+        domain_model.events.append(
             events.MeasurementSaved(
                 initiator=None,
-                sequence=measurement.sequence,
-                distance=measurement.distance,
-                nlos=measurement.nlos_final,
-                rssi=measurement.rssi_final,
-                fpi=measurement.fpi_final,
-                e_distance=measurement.edistance,
+                sequence=domain_model.sequence,
+                distance=domain_model.distance,
+                nlos=domain_model.nlos_final,
+                rssi=domain_model.rssi_final,
+                fpi=domain_model.fpi_final,
+                e_distance=domain_model.edistance,
             )
         )
 
-    def get_by_test(self, test):
+    async def get_by_test(self, test):
         return [d.to_domain() for d in django_model.objects.filter(test=test)]
 
-    def get_by_calibration_id(self, calibration_id):
+    async def get_by_calibration_id(self, calibration_id):
         return [
             d.to_domain()
             for d in django_model.objects.filter(
@@ -32,5 +32,5 @@ class DistanceMeasurementRepository(AbstractRepository):
             )
         ]
 
-    def list(self):
+    async def list(self):
         return [d.to_domain() for d in django_model.objects.all()]

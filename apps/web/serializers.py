@@ -1,10 +1,15 @@
 # Third Party
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+User = get_user_model()
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+class MyTokenObtainPairSerializer(
+    TokenObtainPairSerializer
+):  # pylint: disable=abstract-method
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

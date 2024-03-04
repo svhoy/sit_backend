@@ -1,3 +1,3 @@
 from . import utils
-from .genericCalibration import DecaCalibration
-from .psoCalibration import PsoCalibration
+from .generic_calibration import DecaCalibration
+from .pso_calibration import PsoCalibration

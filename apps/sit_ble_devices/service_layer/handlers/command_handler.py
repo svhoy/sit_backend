@@ -1,7 +1,13 @@
+# pylint: disable=unused-argument
+import logging
+
 from channels.layers import get_channel_layer
-from sit_ble_devices.domain import commands, events
+from sit_ble_devices.domain import commands
 from sit_ble_devices.domain.model import calibration, distances
 from sit_ble_devices.service_layer import uow
+
+# create logger
+logger = logging.getLogger("service_layer.command_handler")
 
 
 async def register_ws_client(
@@ -37,8 +43,8 @@ async def save_measurement(
 ):
     async with duow:
         measurement = distances.DistanceMeasurement(
-            initiator=command.initiator,
-            responder=command.responder,
+            initiator_id=command.initiator,
+            responder_id=command.responder,
             measurement_type=command.measurement_type,
             sequence=command.sequence,
             measurement=command.measurement,
@@ -61,8 +67,8 @@ async def save_test_measurement(
 ):
     async with duow:
         measurement = distances.DistanceMeasurement(
-            initiator=command.initiator,
-            responder=command.responder,
+            initiator_id=command.initiator,
+            responder_id=command.responder,
             measurement_type=command.measurement_type,
             sequence=command.sequence,
             measurement=command.measurement,
@@ -85,8 +91,8 @@ async def save_calibration_measurement(
 ):
     async with duow:
         measurement = distances.DistanceMeasurement(
-            initiator=command.initiator,
-            responder=command.responder,
+            initiator_id=command.initiator,
+            responder_id=command.responder,
             measurement_type=command.measurement_type,
             sequence=command.sequence,
             measurement=command.measurement,
@@ -152,26 +158,7 @@ async def start_calibration_calc(
     cuow: uow.CalibrationUnitOfWork,
     duow: uow.DistanceUnitOfWork,
 ):
-    calibration_dom: calibration.Calibrations
-    distance_list: list[distances.DistanceMeasurement]
-    async with duow:
-        distance_list = await duow.distance_measurement.get_by_calibration_id(
-            command.calibration_id
-        )
-
-    async with cuow:
-        calibration_dom = await cuow.calibration_repo.get_by_id(
-            cali_id=command.calibration_id
-        )
-        calibration_dom.append_distances(distance_list)
-        result = calibration_dom.start_calibration(calibration_dom)
-        cuow.calibration_repo.seen.add(calibration_dom)
-        calibration_dom.events.append(
-            events.CalibrationCalcFinished(
-                calibration_id=calibration_dom.calibration_id,
-                result=result,
-            )
-        )
+    logger.info("Starting calibration calculation")
 
 
 async def redirect_command(

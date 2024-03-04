@@ -1,3 +1,5 @@
+import logging
+
 from sit_ble_devices.domain import events
 from sit_ble_devices.domain.model import calibration
 from sit_ble_devices.models import Calibration as django_model
@@ -7,18 +9,34 @@ from sit_ble_devices.models import (
 
 from . import AbstractRepository
 
+logger = logging.getLogger("adapters.repositories.calibration")
+
 
 class CalibrationRepository(AbstractRepository):
-    async def add(self, calibration_domain: calibration.Calibrations):
-        calibration_domain.calibration_id = await django_model.from_domain(
-            calibration_dom=calibration_domain
+    async def add(self, domain_model: calibration.Calibrations):
+        domain_model.calibration_id = await django_model.from_domain(
+            calibration_dom=domain_model
         )
-        self.seen.add(calibration_domain)
-        calibration_domain.events.append(
+        self.seen.add(domain_model)
+        domain_model.events.append(
             events.CalibrationCreated(
-                calibration_id=calibration_domain.calibration_id,
+                calibration_id=domain_model.calibration_id,
             )
         )
+
+    async def list(self):
+        return [d.to_domain() for d in django_model.objects.all()]
+
+    async def get_by_id(self, domain_id: int) -> calibration.Calibrations:
+        model = await django_model.objects.aget(id=domain_id)
+        domain_model = await model.to_domain()
+        domain_model.append_cali_distances(
+            d.to_domain()
+            for d in django_cali_dist_model.objects.filter(
+                calibration_mod__pk=domain_id
+            )
+        )
+        return domain_model
 
     async def add_cali_distances(
         self,
@@ -31,7 +49,7 @@ class CalibrationRepository(AbstractRepository):
             )
             calibration_domain.append_cali_distances(cali_distance_domain)
         self.seen.add(calibration_domain)
-        print(f"Calibration Devices: {calibration_domain.devices}")
+        logger.debug(f"Calibration Devices: {calibration_domain.devices}")
         calibration_domain.events.append(
             events.CalibrationInitFinished(
                 calibration_id=calibration_domain.calibration_id,
@@ -40,17 +58,3 @@ class CalibrationRepository(AbstractRepository):
                 devices=calibration_domain.devices,
             )
         )
-
-    async def get_by_id(self, cali_id) -> calibration.Calibrations:
-        model = await django_model.objects.aget(id=cali_id)
-        domain_model = await model.to_domain()
-        domain_model.append_cali_distances(
-            d.to_domain()
-            for d in django_cali_dist_model.objects.filter(
-                calibration_mod__pk=cali_id
-            )
-        )
-        return domain_model
-
-    def list(self):
-        return [d.to_domain() for d in django_model.objects.all()]

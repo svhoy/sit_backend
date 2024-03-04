@@ -1,5 +1,3 @@
-from unittest.util import _MAX_LENGTH
-
 from django.core.validators import MinValueValidator
 from django.db import models
 

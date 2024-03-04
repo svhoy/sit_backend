@@ -1,8 +1,9 @@
+# pylint: disable=duplicate-code
 import logging
 
 import numpy as np
 
-from .calibration import CalibrationBase
+from ._base_calibration import CalibrationBase
 
 # create logger
 logger = logging.getLogger("service_layer.calibration.classes")
@@ -10,7 +11,6 @@ logger = logging.getLogger("service_layer.calibration.classes")
 
 class DecaCalibration(CalibrationBase):
     def __init__(self, device_list, *args, **kwargs):
-        self.iterations = kwargs.get("iterations", 100)
         self.inital_delay = kwargs.get("inital_delay", 513e-9)
         self.perturbation_limit = kwargs.get("perturbation_limit", 0.2e-9)
         self.num_candidates = kwargs.get("num_candidates", 1000)

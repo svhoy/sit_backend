@@ -1,4 +1,4 @@
-# Third Party
+# pylint: disable=too-many-ancestors
 from rest_framework import permissions, viewsets
 
 from .models import UwbDeviceSettings

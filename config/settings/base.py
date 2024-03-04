@@ -220,45 +220,51 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "ERROR",
         },
-        "consumer": {
+        "daphne": {
+            "handlers": ["console"],
+            "level": "ERROR",
+        },
+        "sit.adapters.repositories": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+        "sit.consumer": {
             "handlers": ["console_self"],
             "level": "DEBUG",
         },
-        "domain.model.calibration": {
+        "sit.domain.model.calibration": {
             "handlers": ["console_self"],
             "level": "DEBUG",
         },
-        "service_layer": {
+        "sit.service_layer": {
             "handlers": ["console_self"],
             "level": "INFO",
         },
-        "service_layer.utils": {
+        "sit.service_layer.utils": {
             "handlers": ["console_self"],
             "level": "INFO",
         },
-        "service_layer.messagebus": {
+        "sit.service_layer.messagebus": {
             "handlers": ["console_self"],
             "level": "INFO",
         },
-        "service_layer.uow": {
+        "sit.service_layer.uow": {
             "handlers": ["console_self"],
             "level": "INFO",
         },
-        "service_layer.handler": {
+        "sit.service_layer.handler": {
             "handlers": ["console_self"],
             "level": "INFO",
         },
-        "service_layer.calibration": {
+        "sit.service_layer.calibration": {
             "handlers": ["console_self"],
             "level": "DEBUG",
-            "propagate": False,
         },
-        "service_layer.calibration.classes": {
+        "sit.service_layer.calibration.classes": {
             "handlers": ["console_self"],
             "level": "INFO",
-            "propagate": False,
         },
     },
     "formatters": {

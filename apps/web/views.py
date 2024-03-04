@@ -1,5 +1,5 @@
-# Third Party
-from django.contrib.auth.models import User
+# pylint: disable=too-many-ancestors
+from django.contrib.auth import get_user_model
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -8,10 +8,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import MyTokenObtainPairSerializer, UserSerializer
 
+User = get_user_model()
+
 
 @api_view(["GET"])
 @permission_classes((permissions.AllowAny,))
-def api_root(request, format=None):
+def api_root(request, format=None):  # pylint: disable=redefined-builtin
     return Response(
         {
             "token": reverse(

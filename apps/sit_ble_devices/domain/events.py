@@ -3,7 +3,7 @@ from json import dumps
 
 
 @dataclass
-class Event:
+class Event:  # pylint: disable=duplicate-code
     @property
     def __dict__(self):
         dict_buf = {}

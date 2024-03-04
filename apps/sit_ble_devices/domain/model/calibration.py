@@ -1,12 +1,9 @@
 import logging
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple
 
 import numpy as np
 from sit_ble_devices.domain.model.distances import DistanceMeasurement
 from sit_ble_devices.service_layer.utils import calibration
-
-if TYPE_CHECKING:
-    from sit_ble_devices.domain.model.uwbdevice import UwbDevice
 
 logger = logging.getLogger("domain.model.calibration")
 
@@ -18,9 +15,10 @@ class CalibrationDistance:
         initiator_id,
         responder_id,
         distance,
-        distance_id=None,
+        *args,
+        **kwargs,
     ):
-        self.distance_id = distance_id
+        self.distance_id = kwargs.get("distance_id", None)
         self.calibration_id = calibration_id
         self.initiator_id = initiator_id
         self.responder_id = responder_id
@@ -67,11 +65,10 @@ class Calibrations:
                     edm_real=edm_real,
                 )
             case "Antenna Calibration (PSO) - ADS":
-                edm_measured, edm_real = self.setup_edms()
+                time_list = await self.get_time_list()
                 calibration_instance = calibration.PsoCalibration(
                     device_list=self.devices,
-                    edm_measured=edm_measured,
-                    edm_real=edm_real,
+                    time_list=time_list,
                 )
             case _:
                 raise ValueError(
@@ -80,7 +77,7 @@ class Calibrations:
 
         if calibration_instance is not None:
             result = await calibration_instance.start_calibration_calc()
-            result = await calibration_instance.calc_delays(result)
+            result = await calibration_instance.calc_tx_rx_delays(result)
             logger.info(f"Calc Results: {result}")
         else:
             result = -1
@@ -137,3 +134,24 @@ class Calibrations:
             and distance.responder_id == responder
         )
         return filtered_distances
+
+    async def filter_times(self, initiator, responder) -> np.ndarray:
+        # TODO: Filter for times instaned of distances and pack in a good workable format
+        filtered_times = np.array(
+            distance
+            for distance in self.distances  # should be times
+            if distance.initiator_id == initiator
+            and distance.responder_id == responder
+        )
+        return filtered_times
+
+    async def get_time_list(self) -> list[float]:
+        time_list = []
+        for initiator in self.devices:
+            for responder in self.devices:
+                if responder != initiator:
+                    time = await self.filter_times(initiator, responder)
+                    time_list.append(time)
+                else:
+                    time_list.append(0)
+        return time_list

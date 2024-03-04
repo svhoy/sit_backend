@@ -11,13 +11,13 @@ class Store:
 
         if self._location:
             if os.path.exists(self._location):
-                with open(self._location, "r") as store_file:
+                with open(self._location, "r", encoding="utf8") as store_file:
                     self._data = json.load(store_file)
             else:
                 self._data = {}
 
     def save(self):
-        with open(self._location, "w") as f:
+        with open(self._location, "w", encoding="utf8") as f:
             json.dump(self._data, f)
 
     def delete(self, key):

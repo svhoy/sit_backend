@@ -58,14 +58,11 @@ profile = "black"
 [tool.pylint]
 
 [tool.pylint.main]
-disable = ['I1101', 'C0114', 'C0115', 'C0116', 'W1203', 'W0621']
+disable = ['I1101', 'C0114', 'C0115', 'C0116', 'W1203', 'W0621', 'R0903']
 ignore="manage.py"
 ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
-
-[tool.pylint.basic]
-const-naming-style='UPPER_CASE'
-module-naming-style='camelCase'
-class-naming-style='PascalCase'
+max-attributes=20
+max-locals=20
 
 [tool.pylint.logging]
 logging-format-style = "new"

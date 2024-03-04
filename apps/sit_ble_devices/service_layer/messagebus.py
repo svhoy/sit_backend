@@ -7,14 +7,20 @@ logger = logging.getLogger("service_layer.messagebus")
 
 class MessageBus:
     def __init__(
-        self, uow, duow, cuow, uduow, event_handlers, command_handlers
+        self,
+        uow,
+        duow,
+        cuow,
+        uduow,
+        *args,
+        **kwargs,
     ):
         self.uow = uow
         self.duow = duow
         self.cuow = cuow
         self.uduow = uduow
-        self.event_handlers = event_handlers
-        self.command_handlers = command_handlers
+        self.event_handlers = kwargs.get("event_handlers", {})
+        self.command_handlers = kwargs.get("command_handlers", {})
         self.queue = []
 
     async def handle(self, message):
@@ -38,7 +44,7 @@ class MessageBus:
                 self.queue.extend(self.duow.collect_new_events())
                 self.queue.extend(self.cuow.collect_new_events())
                 self.queue.extend(self.uduow.collect_new_events())
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 logger.error(f"Exception handling event: {event}")
                 continue
 
@@ -51,5 +57,5 @@ class MessageBus:
             self.queue.extend(self.cuow.collect_new_events())
             self.queue.extend(self.uduow.collect_new_events())
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.error(f"Exception handling command: {command}")

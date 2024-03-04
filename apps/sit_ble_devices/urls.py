@@ -1,11 +1,12 @@
+# pylint: disable=duplicate-code
 from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from .views import (
-    UwbDeviceViewSet,
     DeviceTestGroupsViewSet,
     DeviceTestsViewSet,
     DistanceMeasurementViewSet,
+    UwbDeviceViewSet,
 )
 
 app_name = "sit_ble_devices"

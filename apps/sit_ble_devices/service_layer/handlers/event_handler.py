@@ -1,10 +1,10 @@
+# pylint: disable=unused-argument
 import json
 
 from channels.layers import get_channel_layer
 from sit_ble_devices.domain import commands, events
-from sit_ble_devices.domain.model import uwbdevice
+from sit_ble_devices.domain.model import calibration, distances, uwbdevice
 from sit_ble_devices.service_layer import uow
-from sit_ble_devices.service_layer.utils import calibrations
 
 
 async def send_connection_info(event: events.WsClientRegisterd):
@@ -69,15 +69,23 @@ async def send_start_calibration(event: events.CalibrationInitFinished):
 
 
 async def start_calibration_calc(
-    event: events.CalibrationMeasurementFinished,
+    command: commands.StartCalibrationCalc,
     cuow: uow.CalibrationUnitOfWork,
+    duow: uow.DistanceUnitOfWork,
 ):
-    result = []
+    calibration_dom: calibration.Calibrations
+    distance_list: list[distances.DistanceMeasurement]
+    async with duow:
+        distance_list = await duow.distance_measurement.get_by_calibration_id(
+            command.calibration_id
+        )
+
     async with cuow:
         calibration_dom = await cuow.calibration_repo.get_by_id(
-            cali_id=event.calibration_id
+            cali_id=command.calibration_id
         )
-        result = await calibrations.start_calibration(calibration_dom)
+        calibration_dom.append_distances(distance_list)
+        result = calibration_dom.start_calibration(calibration_dom)
         cuow.calibration_repo.seen.add(calibration_dom)
         calibration_dom.events.append(
             events.CalibrationCalcFinished(

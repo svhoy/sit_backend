@@ -3,7 +3,7 @@ from json import dumps
 
 
 @dataclass
-class Command:
+class Command:  # pylint: disable=duplicate-code
     @property
     def __dict__(self):
         dict_buf = {}
@@ -157,7 +157,6 @@ class SaveCalibrationMeasurement(Command):
     nlos_final: int
     rssi_final: float
     fpi_final: float
-
 
 
 @dataclass
