@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from sit_ble_devices.domain import events
 from sit_ble_devices.domain.model import calibration
@@ -41,7 +42,7 @@ class CalibrationRepository(AbstractRepository):
     async def add_cali_distances(
         self,
         calibration_domain: calibration.Calibrations,
-        cali_distances_domains: list[calibration.CalibrationDistance],
+        cali_distances_domains: List[calibration.CalibrationDistance],
     ):
         for cali_distance_domain in cali_distances_domains:
             cali_distance_domain.id = await django_cali_dist_model.from_domain(

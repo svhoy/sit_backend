@@ -1,3 +1,5 @@
+from typing import List
+
 from sit_ble_devices.domain import events
 from sit_ble_devices.domain.model import uwbdevice
 from sit_ble_devices.models import AntDelay as django_delay_model
@@ -32,7 +34,7 @@ class UwbDeviceRepository(AbstractRepository):
         device_domain_model.append_ant_delay(ant_dly)
         return device_domain_model
 
-    def get_ant_dly_by_device(self, device_id) -> list[uwbdevice.AntDelay]:
+    def get_ant_dly_by_device(self, device_id) -> List[uwbdevice.AntDelay]:
         return [
             d.to_domain()
             for d in django_delay_model.objects.filter(
