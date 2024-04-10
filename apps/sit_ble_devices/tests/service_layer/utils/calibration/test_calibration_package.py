@@ -35,3 +35,18 @@ class TestCalibration:
         )
         delays = await pso.start_calibration_calc()
         npt.assert_allclose(define_delay_array, delays, atol=1e-9)
+
+    async def test_gn_calibration(
+        self,
+        define_device_list,
+        define_edm_real_tof,
+        define_edm_measured_tof,
+        define_delay_array,
+    ):
+        gn = calibration.GaussNewtonCalibration(
+            device_list=define_device_list,
+            edm_measured=define_edm_measured_tof,
+            edm_real=define_edm_real_tof,
+        )
+        delays = await gn.start_calibration_calc()
+        npt.assert_allclose(define_delay_array, delays, atol=1e-9)

@@ -23,7 +23,7 @@ class UwbDeviceRepository(AbstractRepository):
         return await model.to_domain()
 
     async def list(self) -> list[uwbdevice.UwbDevice]:
-        return [d.to_domain() for d in django_model.objects.all()]
+        return [await d.to_domain() async for d in django_model.objects.all()]
 
     async def add_ant_dly(
         self,
@@ -34,10 +34,12 @@ class UwbDeviceRepository(AbstractRepository):
         device_domain_model.append_ant_delay(ant_dly)
         return device_domain_model
 
-    def get_ant_dly_by_device(self, device_id) -> List[uwbdevice.AntDelay]:
+    async def get_ant_dly_by_device(
+        self, device_id
+    ) -> List[uwbdevice.AntDelay]:
         return [
-            d.to_domain()
-            for d in django_delay_model.objects.filter(
+            await d.to_domain()
+            async for d in django_delay_model.objects.filter(
                 device__device_id=device_id
             )
         ]

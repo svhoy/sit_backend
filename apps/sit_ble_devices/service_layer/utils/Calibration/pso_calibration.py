@@ -29,11 +29,11 @@ class PsoCalibration(CalibrationBase):
                 self.objective_edm_function, iters=self.iterations
             )
         elif (
-            len(self.time_dict) >= 2
+            len(self.measurement_pairs) >= 2
         ):  # Provide a minimum of 2 device measurements pairs
             mixed_delays = np.array([])
             delays = np.array([])
-            for measurement in self.time_dict:
+            for measurement in self.measurement_pairs:
                 optimizer = ps.single.GlobalBestPSO(
                     n_particles=self.n_particles,
                     dimensions=1,
@@ -41,16 +41,17 @@ class PsoCalibration(CalibrationBase):
                     bounds=self.bounds,
                 )
                 cost, delay = optimizer.optimize(
-                    self.objective_time_function,
+                    self.objective_pso_function,
                     iters=self.iterations,
-                    measurement=measurement,
+                    measurements=measurement,
                 )
-                mixed_delays = np.append(delays, delay)
+                mixed_delays = np.append(mixed_delays, delay[0])
 
-            delays = self.calculated_lst_device_delays(mixed_delays)
+            delays = await self.calculated_lst_device_delays(mixed_delays)
         else:
             raise ValueError(
-                "No EDM or Times provied to calibrate antenna delays."
+                "No EDM or Measurements provied to calibrate antenna delays."
             )
+
         logger.info(f"Cost: {cost}, Delay: {delays}")
         return delays

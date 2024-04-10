@@ -85,6 +85,12 @@ class CalibrationInitFinished(Event):
 
 
 @dataclass
+class CalibrationCopied(Event):
+    calibration_id: int
+    calibration_type: str
+
+
+@dataclass
 class CalibrationMeasurementFinished(Event):
     calibration_id: int
 

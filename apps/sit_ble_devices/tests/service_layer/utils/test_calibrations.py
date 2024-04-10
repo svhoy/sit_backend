@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from sit_ble_devices.service_layer.utils.calibrations import (
+from sit_ble_devices.service_layer.utils.calibration.utils import (
     convert_distance_to_tof,
     convert_list_to_matrix,
 )

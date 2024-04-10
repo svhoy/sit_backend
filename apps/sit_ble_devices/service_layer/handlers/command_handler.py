@@ -2,12 +2,12 @@
 import logging
 
 from channels.layers import get_channel_layer
-from sit_ble_devices.domain import commands
+from sit_ble_devices.domain import commands, events
 from sit_ble_devices.domain.model import calibration, distances
 from sit_ble_devices.service_layer import uow
 
 # create logger
-logger = logging.getLogger("service_layer.command_handler")
+logger = logging.getLogger("sit.service_layer.handler")
 
 
 async def register_ws_client(
@@ -119,17 +119,70 @@ async def create_calibration(
             measurement_type=command.measurement_type,
             devices=command.devices,
         )
+
         await cuow.calibration_repo.add(new_calibration)
         await cuow.commit()
+
+
+async def copie_calibration(
+    command: commands.CopieCalibration,
+    cuow: uow.CalibrationUnitOfWork,
+    duow: uow.DistanceUnitOfWork,
+):
+    new_calibration_id: int
+    async with cuow:
+        calibration_dom = await cuow.calibration_repo.get_by_id(
+            domain_id=command.copie_calibration_id
+        )
+        new_calibration = calibration.Calibrations(
+            calibration_type=command.calibration_type,
+            measurement_type=calibration_dom.measurement_type,
+            devices=calibration_dom.devices,
+        )
+        new_calibration.calibration_id = await cuow.calibration_repo.add(
+            new_calibration
+        )
+
+        for cali_distance in calibration_dom.cali_distances:
+            cali_distance.calibration_id = new_calibration.calibration_id
+
+        await cuow.calibration_repo.add_cali_distances(
+            calibration_domain=new_calibration,
+            cali_distances_domains=calibration_dom.cali_distances,
+            copie=True,
+        )
+        new_calibration_id = new_calibration.calibration_id
+
+        await cuow.commit()
+    async with duow:
+        await duow.distance_measurement.update_calibration_id(
+            calibration_id=command.copie_calibration_id,
+            new_calibration_id=new_calibration_id,
+        )
+        await duow.commit()
+
+    async with cuow:
+        calibration_dom = await cuow.calibration_repo.get_by_id(
+            new_calibration_id
+        )
+        cuow.calibration_repo.seen.add(calibration_dom)
+        calibration_dom.events.append(
+            events.CalibrationCopied(
+                calibration_id=calibration_dom.calibration_id,
+                calibration_type=calibration_dom.calibration_type,
+            )
+        )
 
 
 async def add_calibration_distances(
     command: commands.AddCalibrationDistances, cuow: uow.CalibrationUnitOfWork
 ):
+
     async with cuow:
         cali_distance_list = []
+
         calibration_dom = await cuow.calibration_repo.get_by_id(
-            cali_id=command.calibration_id
+            domain_id=command.calibration_id
         )
         for cali_distance in command.distance_list:
             new_cali_distance = calibration.CalibrationDistance(
@@ -146,10 +199,11 @@ async def add_calibration_distances(
             )
             cali_distance_list.append(new_cali_distance)
             cali_distance_list.append(new_cali_distance2)
-        await cuow.calibration_repo.add_cali_distances(
-            calibration_domain=calibration_dom,
-            cali_distances_domains=cali_distance_list,
-        )
+
+            await cuow.calibration_repo.add_cali_distances(
+                calibration_domain=calibration_dom,
+                cali_distances_domains=cali_distance_list,
+            )
         await cuow.commit()
 
 
@@ -193,4 +247,5 @@ COMMAND_HANDLER = {
     commands.AddCalibrationDistances: add_calibration_distances,
     commands.SaveCalibrationMeasurement: save_calibration_measurement,
     commands.StartCalibrationCalc: start_calibration_calc,
+    commands.CopieCalibration: copie_calibration,
 }

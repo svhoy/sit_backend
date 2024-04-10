@@ -220,7 +220,7 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "ERROR",
+            "level": "INFO",
         },
         "daphne": {
             "handlers": ["console"],
@@ -238,25 +238,33 @@ LOGGING = {
             "handlers": ["console_self"],
             "level": "DEBUG",
         },
+        "sit.domain.model.distance": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.models.devices": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
         "sit.service_layer": {
             "handlers": ["console_self"],
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "sit.service_layer.utils": {
             "handlers": ["console_self"],
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "sit.service_layer.messagebus": {
             "handlers": ["console_self"],
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "sit.service_layer.uow": {
             "handlers": ["console_self"],
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "sit.service_layer.handler": {
             "handlers": ["console_self"],
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "sit.service_layer.calibration": {
             "handlers": ["console_self"],
@@ -264,7 +272,23 @@ LOGGING = {
         },
         "sit.service_layer.calibration.classes": {
             "handlers": ["console_self"],
-            "level": "INFO",
+            "level": "DEBUG",
+        },
+        "sit.adapters.repositories.calibration": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.adapters.repositories.distances": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit_calibration.classes": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "gauss_newton_optimizer": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
         },
     },
     "formatters": {

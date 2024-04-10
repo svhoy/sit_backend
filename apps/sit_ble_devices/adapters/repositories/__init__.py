@@ -6,7 +6,7 @@ class AbstractRepository(abc.ABC):
         self.seen = set()
 
     async def add(self, domain_model):
-        raise NotImplementedError
+        self.seen.add(domain_model)
 
     async def update(self, domain_model):
         raise NotImplementedError

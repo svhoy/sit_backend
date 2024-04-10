@@ -55,6 +55,12 @@ class CreateCalibration(Command):
 
 
 @dataclass
+class CopieCalibration(Command):
+    copie_calibration_id: int
+    calibration_type: str
+
+
+@dataclass
 class AddCalibrationDistances(Command):
     calibration_id: int
     distance_list: list[tuple[str, str, int]]
@@ -133,9 +139,9 @@ class SaveTestMeasurement(Command):
 class StartCalibrationMeasurement(Command):
     calibration_id: int
     devices: list[str]
-    measurement_type: str = (
-        "ds_3_twr"  # set ds-twr to default because it is the better way to measure distance
-    )
+    # set ds-twr to default because it is the better way
+    # to measure distance
+    measurement_type: str = "ds_3_twr"
     max_measurement: int = 200
     rx_ant_dly: int = 0
     tx_ant_dly: int = 0

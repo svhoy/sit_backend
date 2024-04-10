@@ -7,8 +7,9 @@ class DistanceMeasurement:
         distance,
         **kwargs,
     ):
+        self.measurement_id = kwargs.get("measurement_id", None)
         self.test_id = kwargs.get("test_id", None)
-        self.claibration_id = kwargs.get("claibration_id", None)
+        self.calibration_id = kwargs.get("calibration_id", [])
         self.initiator_id = kwargs.get("initiator_id", None)
         self.responder_id = kwargs.get("responder_id", None)
         self.measurement_type = measurement_type

@@ -29,19 +29,20 @@ class Calibrations:
     def __init__(
         self,
         devices,
-        calibration_id=None,
-        calibration_type=None,
-        measurement_type=None,
+        **kwargs,
     ):
-        self.calibration_id: int = calibration_id
-        self.calibration_type: str = calibration_type
+        self.calibration_id: int = kwargs.get("calibration_id", None)
+        self.calibration_type: str = kwargs.get("calibration_type", None)
+        self.measurement_type: str = kwargs.get("measurement_type", None)
         self.devices: list[str] = devices
-        self.measurement_type: str = measurement_type
-        self.cali_distances: list[CalibrationDistance]
-        self.distances: list[DistanceMeasurement]
+        self.temperature = kwargs.get("temperature", None)
+        self.cali_distances: list[CalibrationDistance] = []
+        self.distances: list[DistanceMeasurement] = []
         self.events = []
 
-    def append_cali_distances(self, cali_distance_dom: CalibrationDistance):
+    async def append_cali_distances(
+        self, cali_distance_dom: CalibrationDistance
+    ):
         self.cali_distances.append(cali_distance_dom)
 
     def append_distances(self, distances: DistanceMeasurement):
@@ -51,24 +52,31 @@ class Calibrations:
         calibration_instance = None
         match self.calibration_type:
             case "Antenna Calibration (ASP014)":
-                edm_measured, edm_real = self.setup_edms()
+                edm_measured, edm_real = await self.setup_edms()
                 calibration_instance = calibration.DecaCalibration(
                     device_list=self.devices,
                     edm_measured=edm_measured,
                     edm_real=edm_real,
                 )
             case "Antenna Calibration (PSO) - EDM":
-                edm_measured, edm_real = self.setup_edms()
+                edm_measured, edm_real = await self.setup_edms()
                 calibration_instance = calibration.PsoCalibration(
                     device_list=self.devices,
                     edm_measured=edm_measured,
                     edm_real=edm_real,
                 )
             case "Antenna Calibration (PSO) - ADS":
-                time_list = await self.get_time_list()
+                measurement_list = await self.get_measurement_list()
                 calibration_instance = calibration.PsoCalibration(
                     device_list=self.devices,
-                    time_list=time_list,
+                    measurement_pairs=measurement_list,
+                    bounds=([500e-9], [1200e-9]),
+                )
+            case "Antenna Calibration (GNA) - ADS":
+                measurement_list = await self.get_measurement_list()
+                calibration_instance = calibration.GaussNewtonCalibration(
+                    device_list=self.devices,
+                    measurement_pairs=measurement_list,
                 )
             case _:
                 raise ValueError(
@@ -86,6 +94,9 @@ class Calibrations:
     async def setup_edms(self) -> Tuple[np.ndarray, np.ndarray]:
         avg_distances = []
         real_distances = []
+        edm_measured = np.array([])
+        edm_real = np.array([])
+
         for initiator in self.devices:
             for responder in self.devices:
                 if responder != initiator:
@@ -93,65 +104,105 @@ class Calibrations:
                         initiator, responder
                     )
                     avg_distance = np.mean(distances)
-                    avg_distance = calibration.utils.convert_distance_to_tof(
-                        avg_distance
+                    avg_distance = (
+                        await calibration.utils.convert_distance_to_tof(
+                            avg_distance
+                        )
                     )
                     avg_distances.append(avg_distance)
 
-                    real_distance = self.filter_real_distances(
+                    real_distance = await self.filter_real_distances(
                         initiator, responder
                     )
-                    real_distance = calibration.utils.convert_distance_to_tof(
-                        real_distance
+                    real_distance = (
+                        await calibration.utils.convert_distance_to_tof(
+                            real_distance
+                        )
                     )
                     real_distances.append(real_distance)
                 else:
                     avg_distances.append(0)
                     real_distances.append(0)
 
-        edm_measured = calibration.utils.convert_list_to_matrix(
+        edm_measured = await calibration.utils.convert_list_to_matrix(
             self.devices, avg_distances
         )
-        edm_real = calibration.utils.convert_list_to_matrix(
+        edm_real = await calibration.utils.convert_list_to_matrix(
             self.devices, real_distances
         )
+
         return edm_measured, edm_real
 
     async def filter_distances(self, initiator, responder) -> np.ndarray:
         filtered_distances = np.array(
-            distance
-            for distance in self.distances
-            if distance.initiator_id == initiator
-            and distance.responder_id == responder
+            [
+                distance.distance
+                for distance in self.distances
+                if distance.initiator_id == initiator
+                and distance.responder_id == responder
+            ]
         )
         return filtered_distances
 
     async def filter_real_distances(self, initiator, responder) -> np.ndarray:
-        filtered_distances = np.array(
-            distance
-            for distance in self.cali_distances
-            if distance.initiator_id == initiator
-            and distance.responder_id == responder
-        )
-        return filtered_distances
+        for distance in self.cali_distances:
+            if (
+                distance.initiator_id == initiator
+                and distance.responder_id == responder
+            ):
+                return distance.distance
 
-    async def filter_times(self, initiator, responder) -> np.ndarray:
+        raise ValueError(f"Distance not found for {initiator} and {responder}")
+
+    async def filter_times(self, initiator, responder) -> dict:
         # TODO: Filter for times instaned of distances and pack in a good workable format
-        filtered_times = np.array(
-            distance
-            for distance in self.distances  # should be times
-            if distance.initiator_id == initiator
-            and distance.responder_id == responder
-        )
-        return filtered_times
+        measurement_dict = {
+            "initator": initiator,
+            "responder": responder,
+            "time_round_1": np.array([]),
+            "time_round_2": np.array([]),
+            "time_reply_1": np.array([]),
+            "time_reply_2": np.array([]),
+        }
+        for measurement in self.distances:
+            if (
+                measurement.initiator_id == initiator
+                and measurement.responder_id == responder
+            ):
+                measurement_dict["time_round_1"] = np.append(
+                    measurement_dict["time_round_1"],
+                    measurement.time_round_1,
+                )
+                measurement_dict["time_round_2"] = np.append(
+                    measurement_dict["time_round_2"],
+                    measurement.time_round_2,
+                )
+                measurement_dict["time_reply_1"] = np.append(
+                    measurement_dict["time_reply_1"],
+                    measurement.time_reply_1,
+                )
+                measurement_dict["time_reply_2"] = np.append(
+                    measurement_dict["time_reply_2"],
+                    measurement.time_reply_2,
+                )
 
-    async def get_time_list(self) -> list[float]:
-        time_list = []
-        for initiator in self.devices:
-            for responder in self.devices:
-                if responder != initiator:
-                    time = await self.filter_times(initiator, responder)
-                    time_list.append(time)
-                else:
-                    time_list.append(0)
-        return time_list
+        measurement_dict["real_distance"] = await self.filter_real_distances(
+            initiator, responder
+        )
+        measurement_dict["real_tof"] = (
+            await calibration.utils.convert_distance_to_tof(
+                measurement_dict["real_distance"]
+            )
+        )
+        return measurement_dict
+
+    async def get_measurement_list(self) -> list[float]:
+        measurement_list = []
+        for idx, initiator in enumerate(self.devices):
+            for responder in self.devices[idx + 1 :]:
+                measurement_dict = await self.filter_times(
+                    initiator, responder
+                )
+                measurement_list.append(measurement_dict)
+
+        return measurement_list

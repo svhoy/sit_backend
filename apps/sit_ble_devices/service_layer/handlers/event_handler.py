@@ -1,10 +1,13 @@
 # pylint: disable=unused-argument
 import json
+import logging
 
 from channels.layers import get_channel_layer
 from sit_ble_devices.domain import commands, events
 from sit_ble_devices.domain.model import calibration, distances, uwbdevice
 from sit_ble_devices.service_layer import uow
+
+logger = logging.getLogger("sit.service_layer.handler")
 
 
 async def send_connection_info(event: events.WsClientRegisterd):
@@ -62,6 +65,7 @@ async def send_start_calibration(event: events.CalibrationInitFinished):
         devices=event.devices,
     )
     send_msg = command.json
+    logger.debug(f"send_start_calibration: {send_msg}")
     channel_layer = get_channel_layer()
     await channel_layer.group_send(
         "sit_1", {"type": "send_event", "data": send_msg}
@@ -69,10 +73,11 @@ async def send_start_calibration(event: events.CalibrationInitFinished):
 
 
 async def start_calibration_calc(
-    command: commands.StartCalibrationCalc,
+    command: events.CalibrationMeasurementFinished | events.CalibrationCopied,
     cuow: uow.CalibrationUnitOfWork,
     duow: uow.DistanceUnitOfWork,
 ):
+
     calibration_dom: calibration.Calibrations
     distance_list: list[distances.DistanceMeasurement]
     async with duow:
@@ -82,17 +87,28 @@ async def start_calibration_calc(
 
     async with cuow:
         calibration_dom = await cuow.calibration_repo.get_by_id(
-            cali_id=command.calibration_id
+            domain_id=command.calibration_id
         )
         calibration_dom.append_distances(distance_list)
-        result = calibration_dom.start_calibration(calibration_dom)
-        cuow.calibration_repo.seen.add(calibration_dom)
-        calibration_dom.events.append(
-            events.CalibrationCalcFinished(
-                calibration_id=calibration_dom.calibration_id,
-                result=result,
+        try:
+            result = await calibration_dom.start_calibration_calc()
+            cuow.calibration_repo.seen.add(calibration_dom)
+            calibration_dom.events.append(
+                events.CalibrationCalcFinished(
+                    calibration_id=calibration_dom.calibration_id,
+                    result=result,
+                )
             )
-        )
+        except Exception as e:
+            logger.error(f"Error starting calibration calculation: {e}")
+
+
+async def send_copied_calibration(event: events.CalibrationCopied):
+    send_msg = event.json
+    channel_layer = get_channel_layer()
+    await channel_layer.group_send(
+        "sit_1", {"type": "send_event", "data": send_msg}
+    )
 
 
 async def finished_calibration(
@@ -124,8 +140,6 @@ async def redirect_event(
     event: (
         events.BleDeviceConnectError
         | events.BleDeviceConnectFailed
-        | events.CalibrationMeasurementFinished
-        | events.CalibrationCalcFinished
         | events.CalibrationResultsSaved
     ),
 ):
@@ -148,8 +162,10 @@ EVENT_HANDLER = {
     events.CalibrationInitFinished: [send_start_calibration],
     events.CalibrationMeasurementFinished: [
         start_calibration_calc,
-        redirect_event,
     ],
-    events.CalibrationCalcFinished: [finished_calibration, redirect_event],
+    events.CalibrationCalcFinished: [finished_calibration],
     events.CalibrationResultsSaved: [redirect_event],
+    events.CalibrationCopied: [
+        send_copied_calibration,
+    ],
 }

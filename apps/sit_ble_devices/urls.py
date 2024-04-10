@@ -3,6 +3,8 @@ from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from .views import (
+    CalibrationsDistancesViewSet,
+    CalibrationViewSet,
     DeviceTestGroupsViewSet,
     DeviceTestsViewSet,
     DistanceMeasurementViewSet,
@@ -23,9 +25,21 @@ device_list = UwbDeviceViewSet.as_view({"get": "list", "post": "create"})
 measurement_list = DistanceMeasurementViewSet.as_view({"get": "list"})
 measurement_delete = DistanceMeasurementViewSet.as_view(
     {
+        "get": "retrieve",
         "delete": "destroy",
     }
 )
+calibration_distance_list = CalibrationsDistancesViewSet.as_view(
+    {"get": "list"}
+)
+calibration_view_list = CalibrationViewSet.as_view({"get": "list"})
+calibration_view_details = CalibrationViewSet.as_view(
+    {
+        "get": "retrieve",
+        "delete": "destroy",
+    }
+)
+
 test_view_list = DeviceTestsViewSet.as_view({"get": "list", "post": "create"})
 test_view_details = DeviceTestsViewSet.as_view(
     {
@@ -61,6 +75,21 @@ urlpatterns = format_suffix_patterns(
             "api/measurement-list/<int:pk>/",
             measurement_delete,
             name="measurement-detail",
+        ),
+        path(
+            "api/calibration/",
+            calibration_view_list,
+            name="calibration-list",
+        ),
+        path(
+            "api/calibration/<int:pk>/",
+            calibration_view_details,
+            name="calibration-details",
+        ),
+        path(
+            "api/calibration-distance/",
+            calibration_distance_list,
+            name="calibration-distance-list",
         ),
         path("api/tests/", test_view_list, name="test-list"),
         path("api/tests/<int:pk>/", test_view_details, name="test-details"),

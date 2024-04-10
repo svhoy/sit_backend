@@ -36,3 +36,8 @@ def define_delay_array():
             515.0413e-9,
         ]
     )
+
+
+@pytest.fixture
+def define_measurement_list():
+    pass
