@@ -18,6 +18,8 @@ django-filter = "^23.5"
 django-cors-headers = "^4.3.1"
 numpy = "^1.26.3"
 channels-redis = "^4.2.0"
+pyswarms = "^1.3.0"
+scipy = "^1.13.0"
 
 
 [tool.poetry.group.test.dependencies]
@@ -32,6 +34,7 @@ pylint = "^3.0.3"
 mypy = "^1.8.0"
 django-stubs = "^4.2.7"
 pylint-django = "^2.5.5"
+ipykernel = "^6.29.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -56,14 +59,20 @@ profile = "black"
 [tool.pylint]
 
 [tool.pylint.main]
-disable = ['I1101', 'C0114', 'C0115', 'C0116', 'W1203']
+# Disable 
+# R0903: Too few public methods, 
+# W0621: Redefining name from outer scope, 
+# W1203: Using the global statement, 
+# C0114: Missing module docstring, 
+# C0115: Missing class docstring, 
+# C0116: Missing function or method docstring
+# I1101: Module has no member
+disable = ['I1101', 'C0114', 'C0115', 'C0116', 'W1203', 'W0621', 'R0903']
 ignore="manage.py"
 ignore-paths='.*/migrations/*, ./config/*, .*/tests/*'
-
-[tool.pylint.basic]
-const-naming-style='UPPER_CASE'
-module-naming-style='camelCase'
-class-naming-style='PascalCase'
+max-attributes=20
+max-locals=20
+fail-under=9.5
 
 [tool.pylint.logging]
 logging-format-style = "new"
@@ -75,4 +84,8 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 [tool.django-stubs]
 django_settings_module = "config.settings"
 
-
+#Pytest section
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = 'config.settings.test'
+python_files = ['tests.py', 'test_*.py']
+filterwarnings = 'ignore::DeprecationWarning'

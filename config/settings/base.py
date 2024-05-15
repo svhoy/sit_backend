@@ -32,7 +32,8 @@ SECRET_KEY = (
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.137.1", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.137.1", "localhost", "192.168.137.23", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["http://192.168.137.1"]
 
 
 # Application definition
@@ -200,6 +201,98 @@ SIMPLE_JWT = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://192.168.137.23"]
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+        "console_self": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "daphne": {
+            "handlers": ["console"],
+            "level": "ERROR",
+        },
+        "sit.adapters.repositories": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+        "sit.consumer": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.domain.model.calibration": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.domain.model.distance": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.models.devices": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer.utils": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer.messagebus": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer.uow": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer.handler": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer.calibration": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.service_layer.calibration.classes": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.adapters.repositories.calibration": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit.adapters.repositories.distances": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "sit_calibration.classes": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+        "gauss_newton_optimizer": {
+            "handlers": ["console_self"],
+            "level": "DEBUG",
+        },
+    },
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s: %(message)s",
+        },
+    },
+}

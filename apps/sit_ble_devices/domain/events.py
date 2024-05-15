@@ -1,9 +1,10 @@
 from dataclasses import asdict, dataclass, field
 from json import dumps
+from msilib import sequence
 
 
 @dataclass
-class Event:
+class Event:  # pylint: disable=duplicate-code
     @property
     def __dict__(self):
         dict_buf = {}
@@ -72,6 +73,18 @@ class MeasurementSaved(Event):
 
 
 @dataclass
+class TestFinished(Event):
+    test_id: int
+
+
+@dataclass
+class CalibrationMeasurementSaved(Event):
+    measurement: int
+    sequence: int
+    devices: list[str] = field(default_factory=list)
+
+
+@dataclass
 class CalibrationCreated(Event):
     calibration_id: int
 
@@ -82,6 +95,23 @@ class CalibrationInitFinished(Event):
     calibration_type: str
     measurement_type: str
     devices: list[str] = field(default_factory=list)
+
+
+@dataclass
+class CalibrationCopied(Event):
+    calibration_id: int
+    calibration_type: str
+
+
+@dataclass
+class CalibrationSimpleCopied(Event):
+    calibration_id: int
+    calibration_type: str
+
+
+@dataclass
+class CalibrationSimpleMeasurementFinished(Event):
+    calibration_id: int
 
 
 @dataclass

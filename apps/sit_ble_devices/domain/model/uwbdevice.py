@@ -1,18 +1,16 @@
 class AntDelay:
     def __init__(
         self,
-        default,
         calibration_id,
         device_id,
         tx_ant_delay,
         rx_ant_delay,
-        ant_delay_id=None,
-        changed=None,
+        **kwargs,
     ):
-        self.ant_delay_id = ant_delay_id
-        self.changed = changed
+        self.ant_delay_id = kwargs.get("ant_delay_id", None)
+        self.changed = kwargs.get("changed", None)
         self.calibration_id = calibration_id
-        self.default = default
+        self.default = kwargs.get("default", False)
         self.device_id = device_id
         self.tx_ant_delay = tx_ant_delay
         self.rx_ant_delay = rx_ant_delay

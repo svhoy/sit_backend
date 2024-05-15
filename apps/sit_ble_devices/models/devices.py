@@ -1,6 +1,40 @@
+import logging
+
 from asgiref.sync import sync_to_async
 from django.db import models
 from sit_ble_devices.domain.model import calibration, uwbdevice
+
+logger = logging.getLogger("sit.models.devices")
+
+CALIBRATION_TYPES = [
+    ("Antenna Calibration (ASP014)", "Antenna Calibration (ASP014)"),
+    (
+        "Antenna Calibration (ASP014) - SSTWR",
+        "Antenna Calibration (ASP014) - SSTWR",
+    ),
+    (
+        "Antenna Calibration (ASP014) - DSTWR",
+        "Antenna Calibration (ASP014) - DSTWR",
+    ),
+    (
+        "Antenna Calibration (PSO) - EDM SSTWR",
+        "Antenna Calibration (PSO) - EDM SSTWR",
+    ),
+    (
+        "Antenna Calibration (PSO) - EDM DSTWR",
+        "Antenna Calibration (PSO) - EDM DSTWR",
+    ),
+    ("Antenna Calibration (PSO) - EDM", "Antenna Calibration (PSO) - EDM"),
+    ("Antenna Calibration (PSO) - SSTWR", "Antenna Calibration (PSO) - SSTWR"),
+    ("Antenna Calibration (PSO) - SDS", "Antenna Calibration (PSO) - SDS"),
+    ("Antenna Calibration (PSO) - SDS", "Antenna Calibration (PSO) - SDS"),
+    ("Antenna Calibration (GNA) - ADS", "Antenna Calibration (GNA) - ADS"),
+    ("Antenna Calibration (GNA) - ADS", "Antenna Calibration (GNA) - ADS"),
+    ("Antenna Calibration (GNA) - ADS", "Antenna Calibration (GNA) - ADS"),
+    ("Antenna Calibration (Simple)", "Antenna Calibration (Simple)"),
+    ("Antenna Calibration (Extended)", "Antenna Calibration (Extended)"),
+    ("Antenna Calibration (Two Device)", "Antenna Calibration (Two Device)"),
+]
 
 
 class UwbDevice(models.Model):
@@ -34,8 +68,11 @@ class UwbDevice(models.Model):
 class Calibration(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)
-    type = models.CharField(max_length=30)
     measurement_type = models.CharField(max_length=30)
+    calibration_type = models.CharField(
+        max_length=40,
+        choices=CALIBRATION_TYPES,
+    )
     temperature = models.IntegerField(blank=True, null=True)
     iterations = models.IntegerField(default=100)
     devices = models.ManyToManyField(UwbDevice, blank=True)
@@ -47,7 +84,9 @@ class Calibration(models.Model):
     @staticmethod
     async def from_domain(calibration_dom: calibration.Calibrations) -> int:
         distance_model = await Calibration.objects.acreate(
-            type=calibration_dom.calibration_type,
+            measurement_type=calibration_dom.measurement_type,
+            calibration_type=calibration_dom.calibration_type,
+            temperature=calibration_dom.temperature,
         )
         devices = []
         for device in calibration_dom.devices:
@@ -65,7 +104,8 @@ class Calibration(models.Model):
         )
         d = calibration.Calibrations(
             calibration_id=self.id,
-            calibration_type=self.type,
+            calibration_type=self.calibration_type,
+            measurement_type=self.measurement_type,
             devices=device_list,
         )
         return d
@@ -94,10 +134,10 @@ class CalibrationsDistances(models.Model):
             id=cali_distance_dom.calibration_id
         )
         initiator_mod = await UwbDevice.objects.aget(
-            device_id=cali_distance_dom.initiator_device_id
+            device_id=cali_distance_dom.initiator_id
         )
         responder_mod = await UwbDevice.objects.aget(
-            device_id=cali_distance_dom.responder_device_id
+            device_id=cali_distance_dom.responder_id
         )
         model = await CalibrationsDistances.objects.acreate(
             calibration_mod=calibration_mod,
@@ -113,8 +153,8 @@ class CalibrationsDistances(models.Model):
             distance_id=self.id,
             calibration_id=self.calibration_mod.id,
             distance=self.distance,
-            initiator_id=self.initiator.id,
-            responder_id=self.responder.id,
+            initiator_id=self.initiator.device_id,
+            responder_id=self.responder.device_id,
         )
         return d
 
@@ -144,7 +184,7 @@ class AntDelay(models.Model):
         await ant_dly_mod.asave()
         return ant_dly_mod.id
 
-    async def to_domain(self) -> uwbdevice.AntDelay:
+    def to_domain(self) -> uwbdevice.AntDelay:
         d = uwbdevice.AntDelay(
             ant_delay_id=self.id,
             calibration_id=self.calibration_mod.id,

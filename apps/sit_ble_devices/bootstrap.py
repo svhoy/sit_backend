@@ -14,8 +14,15 @@ def bootstrap(
     duow: uow.DistanceUnitOfWork,
     cuow: uow.CalibrationUnitOfWork,
     uduow: uow.UwbDeviceUnitOfWork,
+    cmuow: uow.CalibrationMeasurementUnitOfWork,
 ):
-    dependencies = {"uow": uow, "duow": duow, "cuow": cuow, "uduow": uduow}
+    dependencies = {
+        "uow": uow,
+        "duow": duow,
+        "cuow": cuow,
+        "uduow": uduow,
+        "cmuow": cmuow,
+    }
 
     injected_event_handlers = {
         event_type: [
@@ -31,12 +38,13 @@ def bootstrap(
     }
 
     return messagebus.MessageBus(
-        uow,
-        duow,
-        cuow,
-        uduow,
-        injected_event_handlers,
-        injected_command_handlers,
+        uow=uow,
+        duow=duow,
+        cuow=cuow,
+        uduow=uduow,
+        cmuow=cmuow,
+        event_handlers=injected_event_handlers,
+        command_handlers=injected_command_handlers,
     )
 
 
@@ -47,4 +55,6 @@ def inject_dependencies(handler, dependencies):
         for name, dependency in dependencies.items()
         if name in params
     }
-    return lambda message: handler(message, **deps)
+    return lambda message: handler(
+        message, **deps
+    )  # pylint: disable=unnecessary-lambda

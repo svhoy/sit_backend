@@ -1,20 +1,69 @@
-from django_filters.rest_framework import DjangoFilterBackend
+# pylint: disable=too-many-ancestors
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from .models import (
-    UwbDevice,
+    AntDelay,
+    Calibration,
+    CalibrationsDistances,
     DeviceTestGroups,
     DeviceTests,
     DistanceMeasurement,
+    UwbDevice,
 )
 from .premissions import IsOwnerOrReadOnly
 from .serializers import (
-    UwbDeviceSerializer,
+    AntDelaySerializer,
+    CalibrationsDistancesSerializer,
+    CalibrationSerializer,
     DeviceTestGroupsSerializer,
     DeviceTestsSerializer,
     DistanceMeasurementSerializer,
+    UwbDeviceSerializer,
 )
+
+
+class CalibrationsDistancesViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    This viewset automatically provides `list` actions.
+    """
+
+    serializer_class = CalibrationsDistancesSerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    def get_queryset(self):
+        queryset = CalibrationsDistances.objects.all().order_by("created")
+        calibration_id = self.request.query_params.get("calibration", None)
+        if calibration_id is not None:
+            queryset = queryset.filter(calibration_mod__id=calibration_id)
+        return queryset
+
+
+class CalibrationViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    This viewset automatically provides `list`, `retrieve`,
+    `update` and `destroy` actions.
+
+    """
+
+    queryset = Calibration.objects.all().order_by("-created")
+    serializer_class = CalibrationSerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsOwnerOrReadOnly,
+    ]
+    PageNumberPagination.page_size = 10
+    PageNumberPagination.page_size_query_param = "size"
 
 
 class UwbDeviceViewSet(viewsets.ModelViewSet):
@@ -30,6 +79,22 @@ class UwbDeviceViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
     ]
     PageNumberPagination.page_size = 10
+    PageNumberPagination.page_size_query_param = "size"
+
+
+class AntDelayViewSet(viewsets.ModelViewSet):
+    """
+    This viewset automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    """
+
+    queryset = AntDelay.objects.all().order_by("created")
+    serializer_class = AntDelaySerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+    PageNumberPagination.page_size = 1000
     PageNumberPagination.page_size_query_param = "size"
 
 

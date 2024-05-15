@@ -1,16 +1,29 @@
+import logging
+
 from sit_ble_devices.domain import commands, events
+
+logger = logging.getLogger("service_layer.messagebus")
 
 
 class MessageBus:
     def __init__(
-        self, uow, duow, cuow, uduow, event_handlers, command_handlers
+        self,
+        uow,
+        duow,
+        cuow,
+        uduow,
+        cmuow,
+        *args,
+        **kwargs,
     ):
         self.uow = uow
         self.duow = duow
         self.cuow = cuow
         self.uduow = uduow
-        self.event_handlers = event_handlers
-        self.command_handlers = command_handlers
+        self.cmuow = cmuow
+        self.event_handlers = kwargs.get("event_handlers", {})
+        self.command_handlers = kwargs.get("command_handlers", {})
+        self.queue = []
 
     async def handle(self, message):
         self.queue = [message]
@@ -19,7 +32,7 @@ class MessageBus:
             if isinstance(message, events.Event):
                 await self.handle_event(message)
             elif isinstance(message, commands.Command):
-                print(f"Message Queue: {message}")
+                logger.debug(f"Message Queue: {message}")
                 await self.handle_command(message)
             else:
                 raise ValueError(f"{message} was not an Event or Command")
@@ -30,11 +43,12 @@ class MessageBus:
             try:
                 await handler(event)
                 self.queue.extend(self.uow.collect_new_events())
-                self.queue.extend(self.duow.collect_distance_events())
-                self.queue.extend(self.cuow.collect_calibration_events())
-                self.queue.extend(self.uduow.collect_uwb_device_events())
-            except Exception:
-                print(f"Exception handling event: {event}")
+                self.queue.extend(self.duow.collect_new_events())
+                self.queue.extend(self.cuow.collect_new_events())
+                self.queue.extend(self.uduow.collect_new_events())
+                self.queue.extend(self.cmuow.collect_new_events())
+            except Exception:  # pylint: disable=broad-exception-caught
+                logger.error(f"Exception handling event: {event}")
                 continue
 
     async def handle_command(self, command):
@@ -42,9 +56,10 @@ class MessageBus:
         try:
             await handler(command)
             self.queue.extend(self.uow.collect_new_events())
-            self.queue.extend(self.duow.collect_distance_events())
-            self.queue.extend(self.cuow.collect_calibration_events())
-            self.queue.extend(self.uduow.collect_uwb_device_events())
+            self.queue.extend(self.duow.collect_new_events())
+            self.queue.extend(self.cuow.collect_new_events())
+            self.queue.extend(self.uduow.collect_new_events())
+            self.queue.extend(self.cmuow.collect_new_events())
 
-        except Exception:
-            print(f"Exception handling command: {command}")
+        except Exception:  # pylint: disable=broad-exception-caught
+            logger.error(f"Exception handling command: {command}")

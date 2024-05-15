@@ -1,8 +1,10 @@
 # Third Party
+from django.contrib.auth import get_user_model
 from django.db import models
 
-
 # Create your models here.
+
+User = get_user_model()
 
 CHANNEL_NUM_CHOICES = [
     (5, 5),
@@ -89,7 +91,7 @@ class UwbDeviceSettings(models.Model):
     name = models.CharField(max_length=50)
     created = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(
-        "auth.User", related_name="settings", on_delete=models.CASCADE
+        User, related_name="settings", on_delete=models.CASCADE
     )
     channel_num = models.IntegerField(choices=CHANNEL_NUM_CHOICES, default=5)
     premable_length_tx = models.CharField(

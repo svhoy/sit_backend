@@ -1,5 +1,5 @@
-from sit_ble_devices.store import Store
 from sit_ble_devices.domain import events
+from sit_ble_devices.store import Store
 
 
 class WsClients:
@@ -7,12 +7,12 @@ class WsClients:
         self.json_store = Store()
         self.events = []
 
-    async def add_connection(self, id):
+    async def add_connection(self, websocket_id):
         websocket_connections = self.json_store.get_value(
             "websocket_connection", []
         )
         connection_set = set(websocket_connections)
-        connection_set.add(id)
+        connection_set.add(websocket_id)
         self.json_store.set_value("websocket_connection", list(connection_set))
         self.json_store.save()
         self.events.append(
