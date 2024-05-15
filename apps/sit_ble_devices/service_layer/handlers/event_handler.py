@@ -59,11 +59,21 @@ async def send_calibration_created(event: events.CalibrationCreated):
 
 
 async def send_start_calibration(event: events.CalibrationInitFinished):
-    command = commands.StartCalibrationMeasurement(
-        calibration_id=event.calibration_id,
-        measurement_type=event.measurement_type,
-        devices=event.devices,
-    )
+    if (
+        event.measurement_type == "ds_3_twr"
+        or event.measurement_type == "ss_twr"
+    ):
+        command = commands.StartCalibrationMeasurement(
+            calibration_id=event.calibration_id,
+            measurement_type=event.measurement_type,
+            devices=event.devices,
+        )
+    elif event.measurement_type == "two_device":
+        command = commands.StartSimpleCalibrationMeasurement(
+            calibration_id=event.calibration_id,
+            measurement_type=event.measurement_type,
+            devices=event.devices,
+        )
     send_msg = command.json
     logger.debug(f"send_start_calibration: {send_msg}")
     channel_layer = get_channel_layer()
@@ -73,7 +83,7 @@ async def send_start_calibration(event: events.CalibrationInitFinished):
 
 
 async def start_calibration_calc(
-    command: events.CalibrationMeasurementFinished | events.CalibrationCopied,
+    command: events.CalibrationMeasurementFinished,
     cuow: uow.CalibrationUnitOfWork,
     duow: uow.DistanceUnitOfWork,
 ):
@@ -89,7 +99,40 @@ async def start_calibration_calc(
         calibration_dom = await cuow.calibration_repo.get_by_id(
             domain_id=command.calibration_id
         )
-        calibration_dom.append_distances(distance_list)
+        calibration_dom.append_measurements(distance_list)
+        try:
+            result = await calibration_dom.start_calibration_calc()
+            cuow.calibration_repo.seen.add(calibration_dom)
+            calibration_dom.events.append(
+                events.CalibrationCalcFinished(
+                    calibration_id=calibration_dom.calibration_id,
+                    result=result,
+                )
+            )
+        except Exception as e:
+            logger.error(f"Error starting calibration calculation: {e}")
+
+
+async def start_simple_calibration_calc(
+    command: events.CalibrationSimpleMeasurementFinished,
+    cuow: uow.CalibrationUnitOfWork,
+    cmuow: uow.CalibrationMeasurementUnitOfWork,
+):
+
+    calibration_dom: calibration.Calibrations
+    measurement_list: list[distances.CalibrationMeasurements]
+    async with cmuow:
+        measurement_list = (
+            await cmuow.calibration_measurement.get_by_calibration_id(
+                command.calibration_id
+            )
+        )
+
+    async with cuow:
+        calibration_dom = await cuow.calibration_repo.get_by_id(
+            domain_id=command.calibration_id
+        )
+        calibration_dom.append_measurements(measurement_list)
         try:
             result = await calibration_dom.start_calibration_calc()
             cuow.calibration_repo.seen.add(calibration_dom)
@@ -141,6 +184,8 @@ async def redirect_event(
         events.BleDeviceConnectError
         | events.BleDeviceConnectFailed
         | events.CalibrationResultsSaved
+        | events.MeasurementSaved
+        | events.TestFinished
     ),
 ):
     data = event.json
@@ -158,14 +203,19 @@ EVENT_HANDLER = {
     events.BleDeviceConnectError: [redirect_event],
     events.BleDeviceConnectFailed: [redirect_event],
     events.MeasurementSaved: [redirect_event],
+    events.CalibrationMeasurementSaved: [redirect_event],
     events.CalibrationCreated: [send_calibration_created],
     events.CalibrationInitFinished: [send_start_calibration],
     events.CalibrationMeasurementFinished: [
         start_calibration_calc,
+    ],
+    events.CalibrationSimpleMeasurementFinished: [
+        start_simple_calibration_calc
     ],
     events.CalibrationCalcFinished: [finished_calibration],
     events.CalibrationResultsSaved: [redirect_event],
     events.CalibrationCopied: [
         send_copied_calibration,
     ],
+    events.TestFinished: [redirect_event],
 }

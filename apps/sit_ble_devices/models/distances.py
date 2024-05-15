@@ -101,12 +101,16 @@ class DistanceMeasurement(models.Model):
 
     @staticmethod
     async def update_from_domain(measurement: distances.DistanceMeasurement):
+        calibration = None
         if measurement.test_id is not None:
             test = await DeviceTests.objects.aget(id=measurement.test_id)
             if test.real_test_distance is not None:
                 error_distance = measurement.distance - test.real_test_distance
                 measurement.edistance = error_distance
-        elif measurement.calibration_id is not None:
+        elif (
+            measurement.calibration_id is not None
+            and len(measurement.calibration_id) > 0
+        ):
             calibration = await Calibration.objects.aget(
                 id=measurement.calibration_id
             )
@@ -116,7 +120,7 @@ class DistanceMeasurement(models.Model):
                     id=measurement.measurement_id
                 )
             except DistanceMeasurement.DoesNotExist:
-                distance_model = await DistanceMeasurement()
+                distance_model = DistanceMeasurement()
         except Exception as e:
             logger.error(f"Error updating distance: {e}")
 
@@ -140,7 +144,8 @@ class DistanceMeasurement(models.Model):
         )
         distance_model.first_path_index_final = measurement.fpi_final
         distance_model.error_distance = measurement.edistance
-
+        distance_model.test = test
+        await distance_model.asave()
         try:
             if calibration is not None:
                 await sync_to_async(distance_model.calibrations.add)(
@@ -148,8 +153,6 @@ class DistanceMeasurement(models.Model):
                 )
         except Exception as e:
             print(f"Error Appending calibration to distance: {e}")
-
-        await distance_model.asave()
 
     def to_domain(self) -> distances.DistanceMeasurement:
         d = distances.DistanceMeasurement(
@@ -168,5 +171,132 @@ class DistanceMeasurement(models.Model):
             rssi_final=self.recived_signal_strength_index_final,
             fpi_final=self.first_path_index_final,
             edistance=self.error_distance,
+        )
+        return d
+
+
+class CalibrationMeasurements(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    calibrations = models.ManyToManyField(
+        Calibration,
+        blank=True,
+        related_name="calibration",
+    )
+    device_a = models.ForeignKey(
+        UwbDevice,
+        related_name="device_a",
+        on_delete=models.DO_NOTHING,
+    )
+    device_b = models.ForeignKey(
+        UwbDevice,
+        related_name="device_b",
+        on_delete=models.DO_NOTHING,
+    )
+    device_c = models.ForeignKey(
+        UwbDevice,
+        related_name="device_c",
+        on_delete=models.DO_NOTHING,
+    )
+    sequence = models.IntegerField()
+    measurement = models.IntegerField()
+    time_m21 = models.FloatField(default=0.0)
+    time_m31 = models.FloatField(default=0.0)
+    time_a21 = models.FloatField(default=0.0)
+    time_a31 = models.FloatField(default=0.0)
+    time_b21 = models.FloatField(default=0.0)
+    time_b31 = models.FloatField(default=0.0)
+    time_b_i = models.FloatField(default=0.0)
+    time_b_ii = models.FloatField(default=0.0)
+    time_c_i = models.FloatField(default=0.0)
+    time_c_ii = models.FloatField(default=0.0)
+    time_round_1 = models.FloatField(default=0.0)
+    time_round_2 = models.FloatField(default=0.0)
+    time_reply_1 = models.FloatField(default=0.0)
+    time_reply_2 = models.FloatField(default=0.0)
+    distance = models.FloatField(default=0.0)
+
+    class Meta:
+        ordering = ["created"]
+
+    @staticmethod
+    async def update_from_domain(
+        measurement: distances.CalibrationMeasurements,
+    ):
+        calibration = await Calibration.objects.aget(
+            id=measurement.calibration_id
+        )
+        try:
+            measurement_model = await CalibrationMeasurements.objects.aget(
+                id=measurement.measurement_id
+            )
+        except CalibrationMeasurements.DoesNotExist:
+            measurement_model = CalibrationMeasurements()
+
+        try:
+            measurement_model.device_a = await UwbDevice.objects.aget(
+                device_id=measurement.device_a
+            )
+            measurement_model.device_b = await UwbDevice.objects.aget(
+                device_id=measurement.device_b
+            )
+            measurement_model.device_c = await UwbDevice.objects.aget(
+                device_id=measurement.device_c
+            )
+        except Exception as e:
+            logger.error(f"Error updating measurement: {e}")
+
+        measurement_model.sequence = measurement.sequence
+        measurement_model.measurement = measurement.measurement
+        measurement_model.time_m21 = measurement.time_m21
+        measurement_model.time_m31 = measurement.time_m31
+        measurement_model.time_a21 = measurement.time_a21
+        measurement_model.time_a31 = measurement.time_a31
+        measurement_model.time_b21 = measurement.time_b21
+        measurement_model.time_b31 = measurement.time_b31
+        measurement_model.time_b_i = measurement.time_b_i
+        measurement_model.time_b_ii = measurement.time_b_ii
+        measurement_model.time_c_i = measurement.time_c_i
+        measurement_model.time_c_ii = measurement.time_c_ii
+        measurement_model.time_round_1 = measurement.time_round_1
+        measurement_model.time_round_2 = measurement.time_round_2
+        measurement_model.time_reply_1 = measurement.time_reply_1
+        measurement_model.time_reply_2 = measurement.time_reply_2
+        measurement_model.distance = measurement.distance
+
+        try:
+            await measurement_model.asave()
+        except Exception as e:
+            logger.error(f"Error updating measurement: {e}")
+        try:
+            if calibration is not None:
+                await sync_to_async(measurement_model.calibrations.add)(
+                    calibration
+                )
+        except Exception as e:
+            print(f"Error Appending calibration to distance: {e}")
+
+    def to_domain(self) -> distances.CalibrationMeasurements:
+        d = distances.CalibrationMeasurements(
+            measurement_id=self.id,
+            device_a=self.device_a.device_id,
+            device_b=self.device_b.device_id,
+            device_c=self.device_c.device_id,
+            sequence=self.sequence,
+            measurement=self.measurement,
+            time_b_i=self.time_b_i,
+            time_b_ii=self.time_b_ii,
+            time_c_i=self.time_c_i,
+            time_c_ii=self.time_c_ii,
+            time_m21=self.time_m21,
+            time_m31=self.time_m31,
+            time_a21=self.time_a21,
+            time_a31=self.time_a31,
+            time_b21=self.time_b21,
+            time_b31=self.time_b31,
+            time_round_1=self.time_round_1,
+            time_round_2=self.time_round_2,
+            time_reply_1=self.time_reply_1,
+            time_reply_2=self.time_reply_2,
+            distance=self.distance,
         )
         return d

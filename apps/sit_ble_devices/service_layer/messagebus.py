@@ -12,6 +12,7 @@ class MessageBus:
         duow,
         cuow,
         uduow,
+        cmuow,
         *args,
         **kwargs,
     ):
@@ -19,6 +20,7 @@ class MessageBus:
         self.duow = duow
         self.cuow = cuow
         self.uduow = uduow
+        self.cmuow = cmuow
         self.event_handlers = kwargs.get("event_handlers", {})
         self.command_handlers = kwargs.get("command_handlers", {})
         self.queue = []
@@ -44,6 +46,7 @@ class MessageBus:
                 self.queue.extend(self.duow.collect_new_events())
                 self.queue.extend(self.cuow.collect_new_events())
                 self.queue.extend(self.uduow.collect_new_events())
+                self.queue.extend(self.cmuow.collect_new_events())
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.error(f"Exception handling event: {event}")
                 continue
@@ -56,6 +59,7 @@ class MessageBus:
             self.queue.extend(self.duow.collect_new_events())
             self.queue.extend(self.cuow.collect_new_events())
             self.queue.extend(self.uduow.collect_new_events())
+            self.queue.extend(self.cmuow.collect_new_events())
 
         except Exception:  # pylint: disable=broad-exception-caught
             logger.error(f"Exception handling command: {command}")

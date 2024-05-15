@@ -25,9 +25,19 @@ class PsoCalibration(CalibrationBase):
                 options=options,
                 bounds=self.bounds,
             )
-            cost, delays = optimizer.optimize(
-                self.objective_edm_function, iters=self.iterations
-            )
+            if (
+                self.measurement_type == "adstwr"
+                or self.measurement_type == "sdstwr"
+            ):
+                cost, delays = optimizer.optimize(
+                    self.objective_edm_dstwr_function, iters=self.iterations
+                )
+            elif self.measurement_type == "sstwr":
+                cost, delays = optimizer.optimize(
+                    self.objective_edm_sstwr_function, iters=self.iterations
+                )
+            else:
+                raise ValueError("Invalid measurement type provided.")
         elif (
             len(self.measurement_pairs) >= 2
         ):  # Provide a minimum of 2 device measurements pairs
@@ -40,12 +50,29 @@ class PsoCalibration(CalibrationBase):
                     options=options,
                     bounds=self.bounds,
                 )
-                cost, delay = optimizer.optimize(
-                    self.objective_pso_function,
-                    iters=self.iterations,
-                    measurements=measurement,
-                )
-                mixed_delays = np.append(mixed_delays, delay[0])
+                if self.measurement_type == "adstwr":
+                    cost, delay = optimizer.optimize(
+                        self.objective_pso_adstwr_function,
+                        iters=self.iterations,
+                        measurements=measurement,
+                    )
+                    mixed_delays = np.append(mixed_delays, delay[0])
+                elif self.measurement_type == "sdstwr":
+                    cost, delay = optimizer.optimize(
+                        self.objective_pso_sdstwr_function,
+                        iters=self.iterations,
+                        measurements=measurement,
+                    )
+                    mixed_delays = np.append(mixed_delays, delay[0])
+                elif self.measurement_type == "sstwr":
+                    cost, delay = optimizer.optimize(
+                        self.objective_pso_sstwr_function,
+                        iters=self.iterations,
+                        measurements=measurement,
+                    )
+                    mixed_delays = np.append(mixed_delays, delay[0])
+                else:
+                    raise ValueError("Invalid measurement type provided.")
 
             delays = await self.calculated_lst_device_delays(mixed_delays)
         else:

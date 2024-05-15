@@ -20,17 +20,37 @@ class GaussNewtonCalibration(CalibrationBase):
             mixed_delays = np.array([])
             for measurement in self.measurement_pairs:
                 optimizer = GaussNewtonOptimizer()
-                delay = optimizer.optimize(
-                    self.objective_gauss_newton_function,
-                    self.df_gauss_newton_function,
-                    np.array([515e-9]),
-                    max_iterations=self.iterations,
-                    method="lm",
-                    measurement=measurement,
-                )
+                if self.measurement_type == "adstwr":
+                    delay = optimizer.optimize(
+                        fit_function=self.objective_gauss_newton_ads_function,
+                        df_function=self.df_gauss_newton_ads_function,
+                        initial_guess=np.array([1000e-9]),
+                        max_iterations=self.iterations,
+                        method="lm",
+                        measurement=measurement,
+                    )
+                elif self.measurement_type == "sdstwr":
+                    delay = optimizer.optimize(
+                        fit_function=self.objective_gauss_newton_sds_function,
+                        initial_guess=np.array([1000e-9]),
+                        max_iterations=self.iterations,
+                        method="lm",
+                        measurement=measurement,
+                    )
+                elif self.measurement_type == "sstwr":
+                    delay = optimizer.optimize(
+                        fit_function=self.objective_gauss_newton_sstwr_function,
+                        initial_guess=np.array([1000e-9]),
+                        max_iterations=self.iterations,
+                        method="lm",
+                        measurement=measurement,
+                    )
+                else:
+                    raise ValueError("Invalid measurement type provided.")
                 mixed_delays = np.append(mixed_delays, delay)
                 logger.info(f"Delay: {delay}")
             delays = await self.calculated_lst_device_delays(mixed_delays)
+            logger.debug(f"Delays: {delays}")
         else:
             raise ValueError(
                 "No EDM or Time List provied to calibrate antenna delays."

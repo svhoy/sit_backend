@@ -8,9 +8,32 @@ logger = logging.getLogger("sit.models.devices")
 
 CALIBRATION_TYPES = [
     ("Antenna Calibration (ASP014)", "Antenna Calibration (ASP014)"),
+    (
+        "Antenna Calibration (ASP014) - SSTWR",
+        "Antenna Calibration (ASP014) - SSTWR",
+    ),
+    (
+        "Antenna Calibration (ASP014) - DSTWR",
+        "Antenna Calibration (ASP014) - DSTWR",
+    ),
+    (
+        "Antenna Calibration (PSO) - EDM SSTWR",
+        "Antenna Calibration (PSO) - EDM SSTWR",
+    ),
+    (
+        "Antenna Calibration (PSO) - EDM DSTWR",
+        "Antenna Calibration (PSO) - EDM DSTWR",
+    ),
     ("Antenna Calibration (PSO) - EDM", "Antenna Calibration (PSO) - EDM"),
-    ("Antenna Calibration (PSO) - ADS", "Antenna Calibration (PSO) - ADS"),
+    ("Antenna Calibration (PSO) - SSTWR", "Antenna Calibration (PSO) - SSTWR"),
+    ("Antenna Calibration (PSO) - SDS", "Antenna Calibration (PSO) - SDS"),
+    ("Antenna Calibration (PSO) - SDS", "Antenna Calibration (PSO) - SDS"),
     ("Antenna Calibration (GNA) - ADS", "Antenna Calibration (GNA) - ADS"),
+    ("Antenna Calibration (GNA) - ADS", "Antenna Calibration (GNA) - ADS"),
+    ("Antenna Calibration (GNA) - ADS", "Antenna Calibration (GNA) - ADS"),
+    ("Antenna Calibration (Simple)", "Antenna Calibration (Simple)"),
+    ("Antenna Calibration (Extended)", "Antenna Calibration (Extended)"),
+    ("Antenna Calibration (Two Device)", "Antenna Calibration (Two Device)"),
 ]
 
 

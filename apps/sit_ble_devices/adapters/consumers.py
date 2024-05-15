@@ -17,6 +17,7 @@ bus = bootstrap.bootstrap(
     duow=uow.DistanceUnitOfWork(),
     cuow=uow.CalibrationUnitOfWork(),
     uduow=uow.UwbDeviceUnitOfWork(),
+    cmuow=uow.CalibrationMeasurementUnitOfWork(),
 )
 
 

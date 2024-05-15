@@ -32,7 +32,8 @@ SECRET_KEY = (
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.137.1", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.137.1", "localhost", "192.168.137.23", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["http://192.168.137.1"]
 
 
 # Application definition
@@ -200,9 +201,7 @@ SIMPLE_JWT = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://192.168.137.23"]
 
 # Logging
 LOGGING = {

@@ -22,7 +22,15 @@ class DecaCalibration(CalibrationBase):
         for i in range(self.iterations):
             logger.debug("Running")
             candidates = await self.populate_candidates(i, candidates)
-            candidates = await self.evaluate_candidates(candidates)
+            if self.measurement_type == "sstwr":
+                candidates = await self.evaluate_sstwr_candidates(candidates)
+            elif (
+                self.measurement_type == "sdstwr"
+                or self.measurement_type == "adstwr"
+            ):
+                candidates = await self.evaluate_dstwr_candidates(candidates)
+            else:
+                raise ValueError("Invalid Measurement Type")
 
         best_canidate = candidates[0]
         return best_canidate[:3]
@@ -60,7 +68,28 @@ class DecaCalibration(CalibrationBase):
 
         return candidates
 
-    async def evaluate_candidates(self, candidates):
+    async def evaluate_sstwr_candidates(self, candidates):
+        row, column = self.edm_measured.shape
+        edm_candidate = np.empty((row, column))
+        for index, candidate in enumerate(candidates):
+            for i in range(0, row):
+                for j in range(0, column):
+                    if self.edm_measured[i, j] != 0:
+                        edm_candidate[i, j] = (
+                            (2 * self.edm_measured[i, j])
+                            - ((candidate[i]) + (candidate[j]))
+                        ) / 2.0
+                    else:
+                        edm_candidate[i, j] = 0
+                norm_diff = np.linalg.norm(self.edm_real - edm_candidate)
+                candidates[index, 3] = norm_diff
+
+        sorted_indices = np.argsort(candidates[:, 3])
+        sorted_candidates = candidates[sorted_indices]
+        logger.debug(f"Sorted Candidate: {sorted_candidates}")
+        return sorted_candidates
+
+    async def evaluate_dstwr_candidates(self, candidates):
         row, column = self.edm_measured.shape
         edm_candidate = np.empty((row, column))
         for index, candidate in enumerate(candidates):

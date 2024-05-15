@@ -1,7 +1,7 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from .devices import UwbDevice
+from .devices import AntDelay, UwbDevice
 
 
 class DeviceTestGroups(models.Model):
@@ -46,6 +46,16 @@ class DeviceTests(models.Model):
         UwbDevice,
         on_delete=models.DO_NOTHING,
         related_name="responder_device",
+    )
+    antenna_delay_initator = models.ForeignKey(
+        AntDelay,
+        on_delete=models.DO_NOTHING,
+        related_name="antenna_delay_initator",
+    )
+    antenna_delay_responder = models.ForeignKey(
+        AntDelay,
+        on_delete=models.DO_NOTHING,
+        related_name="antenna_delay_responder",
     )
     comments = models.CharField(max_length=300, blank=True, null=True)
 

@@ -12,6 +12,9 @@ from sit_ble_devices.adapters.repositories.devices import UwbDeviceRepository
 from sit_ble_devices.adapters.repositories.distances import (
     DistanceMeasurementRepository,
 )
+from sit_ble_devices.adapters.repositories.measurements import (
+    CalibrationMeasurementRepository,
+)
 from sit_ble_devices.domain.model.ble_devices import BleClients
 from sit_ble_devices.domain.model.ws_clients import WsClients
 
@@ -24,6 +27,7 @@ class AbstractUnitOfWork(abc.ABC):
     uwb_device_repo: UwbDeviceRepository
     distance_measurement: DistanceMeasurementRepository
     calibration_repo: CalibrationRepository
+    calibration_measurement_repo: CalibrationMeasurementRepository
 
     async def __aenter__(self) -> AbstractUnitOfWork:
         return self
@@ -87,6 +91,31 @@ class DistanceUnitOfWork(AbstractUnitOfWork):
     def collect_new_events(self):
         try:
             for measurement in self.distance_measurement.seen:
+                while measurement.events:
+                    yield measurement.events.pop(0)
+        except AttributeError:
+            logger.debug("Error while collecting Distance Events")
+
+
+class CalibrationMeasurementUnitOfWork(AbstractUnitOfWork):
+    async def __aenter__(self) -> AbstractUnitOfWork:
+        self.calibration_measurement = CalibrationMeasurementRepository()
+        sync_to_async(transaction.set_autocommit)(False)
+        return await super().__aenter__()
+
+    async def __aexit__(self, *args):
+        await super().__aexit__(*args)
+        sync_to_async(transaction.set_autocommit)(True)
+
+    async def commit(self):
+        sync_to_async(transaction.commit)
+
+    async def rollback(self):
+        sync_to_async(transaction.rollback)
+
+    def collect_new_events(self):
+        try:
+            for measurement in self.calibration_measurement.seen:
                 while measurement.events:
                     yield measurement.events.pop(0)
         except AttributeError:

@@ -1,3 +1,3 @@
-from .devices import Calibration, UwbDevice, AntDelay, CalibrationsDistances
-from .distances import DistanceMeasurement
+from .devices import AntDelay, Calibration, CalibrationsDistances, UwbDevice
+from .distances import CalibrationMeasurements, DistanceMeasurement
 from .tests import DeviceTestGroups, DeviceTests

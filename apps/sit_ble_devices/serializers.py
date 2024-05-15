@@ -1,6 +1,8 @@
+from numpy import source
 from rest_framework import serializers
 
 from .models import (
+    AntDelay,
     Calibration,
     CalibrationsDistances,
     DeviceTestGroups,
@@ -53,6 +55,22 @@ class DeviceTestsSerializer(serializers.ModelSerializer):
         source="responder_device.device_id"
     )
 
+    antenna_delay_init_tx = serializers.ReadOnlyField(
+        source="antenna_delay_initator.tx_ant_delay"
+    )
+
+    antenna_delay_init_rx = serializers.ReadOnlyField(
+        source="antenna_delay_initator.rx_ant_delay"
+    )
+
+    antenna_delay_resp_tx = serializers.ReadOnlyField(
+        source="antenna_delay_responder.tx_ant_delay"
+    )
+
+    antenna_delay_resp_rx = serializers.ReadOnlyField(
+        source="antenna_delay_responder.rx_ant_delay"
+    )
+
     class Meta:
         model = DeviceTests
         fields = "__all__"
@@ -61,4 +79,10 @@ class DeviceTestsSerializer(serializers.ModelSerializer):
 class UwbDeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = UwbDevice
+        fields = "__all__"
+
+
+class AntDelaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntDelay
         fields = "__all__"

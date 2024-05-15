@@ -3,6 +3,7 @@ from rest_framework import mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from .models import (
+    AntDelay,
     Calibration,
     CalibrationsDistances,
     DeviceTestGroups,
@@ -12,6 +13,7 @@ from .models import (
 )
 from .premissions import IsOwnerOrReadOnly
 from .serializers import (
+    AntDelaySerializer,
     CalibrationsDistancesSerializer,
     CalibrationSerializer,
     DeviceTestGroupsSerializer,
@@ -54,7 +56,7 @@ class CalibrationViewSet(
 
     """
 
-    queryset = Calibration.objects.all().order_by("created")
+    queryset = Calibration.objects.all().order_by("-created")
     serializer_class = CalibrationSerializer
     permission_classes = [
         permissions.IsAuthenticated,
@@ -77,6 +79,22 @@ class UwbDeviceViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
     ]
     PageNumberPagination.page_size = 10
+    PageNumberPagination.page_size_query_param = "size"
+
+
+class AntDelayViewSet(viewsets.ModelViewSet):
+    """
+    This viewset automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    """
+
+    queryset = AntDelay.objects.all().order_by("created")
+    serializer_class = AntDelaySerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+    PageNumberPagination.page_size = 1000
     PageNumberPagination.page_size_query_param = "size"
 
 

@@ -1,11 +1,10 @@
 # pylint: disable=duplicate-code
-import time
+import logging
 
 import numpy as np
 
-SPEED_OF_LIGHT = 299702547  # m/s
+SPEED_OF_LIGHT = 299710666.95  # m/s
 
-import logging
 
 logger = logging.getLogger("sit_calibration.classes")
 
@@ -18,6 +17,7 @@ class CalibrationBase:
         )
         self.edm_real: np.ndarray = kwargs.get("edm_real", np.array([]))
         self.measurement_pairs = kwargs.get("measurement_pairs", [])
+        self.measurement_type = kwargs.get("measurement_type", "adstwr")
         self.iterations = kwargs.get("iterations", 100)
         self.n_particles = kwargs.get("n_particles", 50)
         self.bounds = kwargs.get(
@@ -27,7 +27,9 @@ class CalibrationBase:
     async def start_calibration_calc(self):
         raise NotImplementedError
 
-    async def calc_tx_rx_delays(self, candidates:list[float]) -> list[list[str, float, float]]:
+    async def calc_tx_rx_delays(
+        self, candidates: list[float]
+    ) -> list[list[str, float, float]]:
         result = []
         for idx, device_id in enumerate(self.device_list):
             tx_ant_dly = candidates[idx] * 0.44  # APS014 TX is 44%
@@ -60,7 +62,22 @@ class CalibrationBase:
             raise ValueError("Invalid delays list provided")
         return delays.tolist()[0]
 
-    def distance_func(self, delay_candidates: np.ndarray) -> float:
+    def distance_edm_sstwr_func(self, delay_candidates: np.ndarray) -> float:
+        row, column = self.edm_measured.shape
+        edm_candidate = np.empty((row, column))
+        for i in range(0, row):
+            for j in range(0, column):
+                if self.edm_measured[i, j] != 0:
+                    edm_candidate[i, j] = (
+                        (2 * self.edm_measured[i, j])
+                        - ((delay_candidates[i]) + (delay_candidates[j]))
+                    ) / 2.0
+                else:
+                    edm_candidate[i, j] = 0
+        norm_diff = np.linalg.norm(self.edm_real - edm_candidate)
+        return norm_diff
+
+    def distance_edm_dstwr_func(self, delay_candidates: np.ndarray) -> float:
         row, column = self.edm_measured.shape
         edm_candidate = np.empty((row, column))
         for i in range(0, row):
@@ -78,15 +95,59 @@ class CalibrationBase:
         norm_diff = np.linalg.norm(self.edm_real - edm_candidate)
         return norm_diff
 
-    def objective_edm_function(self, delay_candidates: np.ndarray):
+    def objective_edm_sstwr_function(self, delay_candidates: np.ndarray):
         n_particales = delay_candidates.shape[0]
         dist = [
-            self.distance_func(delay_candidates[i])
+            self.distance_edm_sstwr_func(delay_candidates[i])
             for i in range(n_particales)
         ]
         return dist
 
-    def objective_pso_function(
+    def objective_edm_dstwr_function(self, delay_candidates: np.ndarray):
+        n_particales = delay_candidates.shape[0]
+        dist = [
+            self.distance_edm_dstwr_func(delay_candidates[i])
+            for i in range(n_particales)
+        ]
+        return dist
+
+    def objective_pso_sstwr_function(
+        self, delay_candidates: np.ndarray, measurements: dict
+    ):
+        time_diff = 0
+
+        # Measurements should be a list of every measurement between these two devices.
+        # In PSO we take the mean of all measurements and then calculate the estimated
+        # Time of Flight before looking how good our candidates are.
+        time_round_1 = measurements["time_round_1"].mean()
+        time_reply_1 = measurements["time_reply_1"].mean()
+        error_tof = (time_round_1 - time_reply_1 - delay_candidates[:, 0]) / 2
+        error_distance = error_tof * SPEED_OF_LIGHT
+        time_diff = abs(measurements["real_distance"] - error_distance)
+        return time_diff
+
+    def objective_pso_sdstwr_function(
+        self, delay_candidates: np.ndarray, measurements: dict
+    ):
+        time_diff = 0
+
+        # Measurements should be a list of every measurement between these two devices.
+        # In PSO we take the mean of all measurements and then calculate the estimated
+        # Time of Flight before looking how good our candidates are.
+        time_round_1 = measurements["time_round_1"].mean()
+        time_round_2 = measurements["time_round_2"].mean()
+        time_reply_1 = measurements["time_reply_1"].mean()
+        time_reply_2 = measurements["time_reply_2"].mean()
+        error_tof = (
+            (time_round_1 - time_reply_1)
+            + (time_round_2 - time_reply_2)
+            - (2 * delay_candidates[:, 0])
+        ) / 4.0
+        error_distance = error_tof * SPEED_OF_LIGHT
+        time_diff = abs(measurements["real_distance"] - error_distance)
+        return time_diff
+
+    def objective_pso_adstwr_function(
         self, delay_candidates: np.ndarray, measurements: dict
     ):
         time_diff = 0
@@ -117,7 +178,7 @@ class CalibrationBase:
         time_diff = abs(measurements["real_distance"] - error_distance)
         return time_diff
 
-    def objective_gauss_newton_function(
+    def objective_gauss_newton_sstwr_function(
         self,
         delay_candidate: np.array,
         time_round_1: float,
@@ -128,7 +189,50 @@ class CalibrationBase:
     ) -> np.ndarray:
         time_diff = 0
         # Measurements should be a dict with the timestamps. The Timestamps are a list with
-        # eache entry represent a single measurement timestamp.
+        # each entry represent a single measurement timestamp.
+        # For Gauss Newton we caclulate the estimated Time of Flight for every measurement
+        # with the current candidate and then calculate the error.
+        error_tof = (time_round_1 - time_reply_1 - delay_candidate[0]) / 2
+        time_diff = abs(real_tof - error_tof)
+
+        return time_diff
+
+    def objective_gauss_newton_sds_function(
+        self,
+        delay_candidate: np.array,
+        time_round_1: float,
+        time_round_2: float,
+        time_reply_1: float,
+        time_reply_2: float,
+        real_tof: float,
+    ) -> np.ndarray:
+        time_diff = 0
+        # Measurements should be a dict with the timestamps. The Timestamps are a list with
+        # each entry represent a single measurement timestamp.
+        # For Gauss Newton we caclulate the estimated Time of Flight for every measurement
+        # with the current candidate and then calculate the error.
+        error_tof = (
+            (time_round_1 - time_reply_1)
+            + (time_round_2 - time_reply_2)
+            - (2 * delay_candidate[0])
+        ) / 4.0
+
+        time_diff = abs(real_tof - error_tof)
+
+        return time_diff
+
+    def objective_gauss_newton_ads_function(
+        self,
+        delay_candidate: np.array,
+        time_round_1: float,
+        time_round_2: float,
+        time_reply_1: float,
+        time_reply_2: float,
+        real_tof: float,
+    ) -> np.ndarray:
+        time_diff = 0
+        # Measurements should be a dict with the timestamps. The Timestamps are a list with
+        # each entry represent a single measurement timestamp.
         # For Gauss Newton we caclulate the estimated Time of Flight for every measurement
         # with the current candidate and then calculate the error.
 
@@ -151,7 +255,7 @@ class CalibrationBase:
 
         return time_diff
 
-    def df_gauss_newton_function(
+    def df_gauss_newton_ads_function(
         self,
         delay_candidate: np.array,
         time_round_1: float,

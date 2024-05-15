@@ -2,7 +2,10 @@ import logging
 from typing import Tuple
 
 import numpy as np
-from sit_ble_devices.domain.model.distances import DistanceMeasurement
+from sit_ble_devices.domain.model.distances import (
+    CalibrationMeasurements,
+    DistanceMeasurement,
+)
 from sit_ble_devices.service_layer.utils import calibration
 
 logger = logging.getLogger("domain.model.calibration")
@@ -23,6 +26,7 @@ class CalibrationDistance:
         self.initiator_id = initiator_id
         self.responder_id = responder_id
         self.distance = distance
+        self.measurements = []
 
 
 class Calibrations:
@@ -38,6 +42,7 @@ class Calibrations:
         self.temperature = kwargs.get("temperature", None)
         self.cali_distances: list[CalibrationDistance] = []
         self.distances: list[DistanceMeasurement] = []
+        self.measurments: list[CalibrationMeasurements] = []
         self.events = []
 
     async def append_cali_distances(
@@ -48,35 +53,111 @@ class Calibrations:
     def append_distances(self, distances: DistanceMeasurement):
         self.distances = distances
 
+    def append_measurements(self, measurements: CalibrationMeasurements):
+        self.measurments = measurements
+
     async def start_calibration_calc(self) -> list[float]:
         calibration_instance = None
         match self.calibration_type:
-            case "Antenna Calibration (ASP014)":
+            case "Antenna Calibration (ASP014) - SSTWR":
                 edm_measured, edm_real = await self.setup_edms()
                 calibration_instance = calibration.DecaCalibration(
                     device_list=self.devices,
                     edm_measured=edm_measured,
                     edm_real=edm_real,
+                    measurement_type="sstwr",
                 )
-            case "Antenna Calibration (PSO) - EDM":
+            case "Antenna Calibration (ASP014) - DSTWR":
+                edm_measured, edm_real = await self.setup_edms()
+                calibration_instance = calibration.DecaCalibration(
+                    device_list=self.devices,
+                    edm_measured=edm_measured,
+                    edm_real=edm_real,
+                    measurement_type="adstwr",
+                )
+            case "Antenna Calibration (PSO) - EDM SSTWR":
                 edm_measured, edm_real = await self.setup_edms()
                 calibration_instance = calibration.PsoCalibration(
                     device_list=self.devices,
                     edm_measured=edm_measured,
                     edm_real=edm_real,
+                    measurement_type="sstwr",
+                )
+            case "Antenna Calibration (PSO) - EDM DSTWR":
+                edm_measured, edm_real = await self.setup_edms()
+                calibration_instance = calibration.PsoCalibration(
+                    device_list=self.devices,
+                    edm_measured=edm_measured,
+                    edm_real=edm_real,
+                    measurement_type="adstwr",
+                )
+            case "Antenna Calibration (PSO) - SSTWR":
+                measurement_list = await self.get_measurement_list()
+                calibration_instance = calibration.PsoCalibration(
+                    device_list=self.devices,
+                    measurement_pairs=measurement_list,
+                    measurement_type="sstwr",
+                    bounds=([500e-9], [1200e-9]),
+                )
+            case "Antenna Calibration (PSO) - SDS":
+                measurement_list = await self.get_measurement_list()
+                calibration_instance = calibration.PsoCalibration(
+                    device_list=self.devices,
+                    measurement_pairs=measurement_list,
+                    measurement_type="sdstwr",
+                    bounds=([500e-9], [1200e-9]),
                 )
             case "Antenna Calibration (PSO) - ADS":
                 measurement_list = await self.get_measurement_list()
                 calibration_instance = calibration.PsoCalibration(
                     device_list=self.devices,
                     measurement_pairs=measurement_list,
+                    measurement_type="adstwr",
                     bounds=([500e-9], [1200e-9]),
+                )
+            case "Antenna Calibration (GNA) - SSTWR":
+                measurement_list = await self.get_measurement_list()
+                calibration_instance = calibration.GaussNewtonCalibration(
+                    device_list=self.devices,
+                    measurement_pairs=measurement_list,
+                    measurement_type="sstwr",
+                )
+            case "Antenna Calibration (GNA) - SDS":
+                measurement_list = await self.get_measurement_list()
+                calibration_instance = calibration.GaussNewtonCalibration(
+                    device_list=self.devices,
+                    measurement_pairs=measurement_list,
+                    measurement_type="sdstwr",
                 )
             case "Antenna Calibration (GNA) - ADS":
                 measurement_list = await self.get_measurement_list()
                 calibration_instance = calibration.GaussNewtonCalibration(
                     device_list=self.devices,
                     measurement_pairs=measurement_list,
+                    measurement_type="adstwr",
+                )
+            case "Antenna Calibration (Simple)":
+                measurement_list = (
+                    await self.get_calibration_measurement_list()
+                )
+                calibration_instance = calibration.SimpleCalibration(
+                    measurement_list=measurement_list,
+                )
+
+            case "Antenna Calibration (Extended)":
+                measurement_list = (
+                    await self.get_calibration_measurement_list()
+                )
+                calibration_instance = calibration.ExtendedCalibration(
+                    measurement_list=measurement_list,
+                )
+            case "Antenna Calibration (Two Device)":
+                measurement_list = (
+                    await self.get_calibration_measurement_list()
+                )
+                calibration_instance = calibration.TwoDeviceCalibration(
+                    measurement_list=measurement_list,
+                    device_list=self.devices,
                 )
             case _:
                 raise ValueError(
@@ -137,9 +218,9 @@ class Calibrations:
         filtered_distances = np.array(
             [
                 distance.distance
-                for distance in self.distances
-                if distance.initiator_id == initiator
-                and distance.responder_id == responder
+                for distance in self.measurments
+                if distance.device_a == initiator
+                and distance.device_b == responder
             ]
         )
         return filtered_distances
@@ -164,10 +245,10 @@ class Calibrations:
             "time_reply_1": np.array([]),
             "time_reply_2": np.array([]),
         }
-        for measurement in self.distances:
+        for measurement in self.measurments:
             if (
-                measurement.initiator_id == initiator
-                and measurement.responder_id == responder
+                measurement.device_a == initiator
+                and measurement.device_b == responder
             ):
                 measurement_dict["time_round_1"] = np.append(
                     measurement_dict["time_round_1"],
@@ -204,5 +285,96 @@ class Calibrations:
                     initiator, responder
                 )
                 measurement_list.append(measurement_dict)
+
+        return measurement_list
+
+    async def filter_two_device_times(self, devices: list[str]) -> dict:
+        # TODO: Filter for times instaned of distances and pack in a good workable format
+        measurement_dict = {
+            "devices": devices,
+            "time_m21": np.array([]),
+            "time_m31": np.array([]),
+            "time_a21": np.array([]),
+            "time_a31": np.array([]),
+            "time_b21": np.array([]),
+            "time_b31": np.array([]),
+            "time_b_i": np.array([]),
+            "time_b_ii": np.array([]),
+            "time_c_i": np.array([]),
+            "time_c_ii": np.array([]),
+        }
+        for measurement in self.measurments:
+            if (
+                measurement.device_a == devices[0]
+                and measurement.device_b == devices[1]
+                and measurement.device_c == devices[2]
+            ):
+                measurement_dict["time_m21"] = np.append(
+                    measurement_dict["time_m21"],
+                    measurement.time_m21,
+                )
+                measurement_dict["time_m31"] = np.append(
+                    measurement_dict["time_m31"],
+                    measurement.time_m31,
+                )
+                measurement_dict["time_a21"] = np.append(
+                    measurement_dict["time_a21"],
+                    measurement.time_a21,
+                )
+                measurement_dict["time_a31"] = np.append(
+                    measurement_dict["time_a31"],
+                    measurement.time_a31,
+                )
+                measurement_dict["time_b21"] = np.append(
+                    measurement_dict["time_b21"],
+                    measurement.time_b21,
+                )
+                measurement_dict["time_b31"] = np.append(
+                    measurement_dict["time_b31"],
+                    measurement.time_b31,
+                )
+                measurement_dict["time_b_i"] = np.append(
+                    measurement_dict["time_b_i"],
+                    measurement.time_b_i,
+                )
+                measurement_dict["time_b_ii"] = np.append(
+                    measurement_dict["time_b_ii"],
+                    measurement.time_b_ii,
+                )
+                measurement_dict["time_c_i"] = np.append(
+                    measurement_dict["time_c_i"],
+                    measurement.time_c_i,
+                )
+                measurement_dict["time_c_ii"] = np.append(
+                    measurement_dict["time_c_ii"],
+                    measurement.time_c_ii,
+                )
+
+        measurement_dict["real_tof_a_b"] = (
+            await calibration.utils.convert_distance_to_tof(
+                await self.filter_real_distances(devices[0], devices[1])
+            )
+        )
+        measurement_dict["real_tof_a_c"] = (
+            await calibration.utils.convert_distance_to_tof(
+                await self.filter_real_distances(devices[0], devices[2])
+            )
+        )
+        measurement_dict["real_tof_b_c"] = (
+            await calibration.utils.convert_distance_to_tof(
+                await self.filter_real_distances(devices[1], devices[2])
+            )
+        )
+        return measurement_dict
+
+    async def get_calibration_measurement_list(self):
+        devices = self.devices
+        measurement_list = []
+        for _ in range(len(self.devices)):
+            measurement_list.append(
+                await self.filter_two_device_times(devices)
+            )
+            device = devices.pop(0)
+            devices.append(device)
 
         return measurement_list

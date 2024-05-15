@@ -4,30 +4,30 @@ from venv import logger
 from asgiref.sync import sync_to_async
 from sit_ble_devices.domain import events
 from sit_ble_devices.domain.model import distances
-from sit_ble_devices.models import DistanceMeasurement as django_model
+from sit_ble_devices.models import CalibrationMeasurements as django_model
 
 from . import AbstractRepository
 
 logger = logging.getLogger("sit.adapters.repositories.distances")
 
 
-class DistanceMeasurementRepository(AbstractRepository):
-    async def add(self, domain_model: distances.DistanceMeasurement):
+class CalibrationMeasurementRepository(AbstractRepository):
+    async def add(self, domain_model: distances.CalibrationMeasurements):
         await self.update(domain_model)
         await super().add(domain_model)
         domain_model.events.append(
-            events.MeasurementSaved(
-                initiator=None,
+            events.CalibrationMeasurementSaved(
+                devices=[
+                    domain_model.device_a,
+                    domain_model.device_b,
+                    domain_model.device_c,
+                ],
+                measurement=domain_model.measurement,
                 sequence=domain_model.sequence,
-                distance=domain_model.distance,
-                nlos=domain_model.nlos_final,
-                rssi=domain_model.rssi_final,
-                fpi=domain_model.fpi_final,
-                e_distance=domain_model.edistance,
             )
         )
 
-    async def update(self, domain_model: distances.DistanceMeasurement):
+    async def update(self, domain_model: distances.CalibrationMeasurements):
         await django_model.update_from_domain(measurement=domain_model)
 
     async def update_calibration_id(
@@ -56,7 +56,7 @@ class DistanceMeasurementRepository(AbstractRepository):
             through_object = await sync_to_async(
                 django_model.calibrations.through
             )(
-                distancemeasurement_id=distance.id,
+                calibrationmeasurements_id=distance.id,
                 calibration_id=new_calibration_id,
             )
             through_objects.append(through_object)
@@ -65,14 +65,8 @@ class DistanceMeasurementRepository(AbstractRepository):
             django_model.calibrations.through.objects.bulk_create
         )(through_objects)
         logger.debug(
-            f"Updated calibration_id for {len(through_objects)} distance measurements: {len(test)}"
+            f"Updated calibration_id for {len(through_objects)} calibration measurements: {len(test)}"
         )
-
-    async def get_by_test(self, test):
-        return [
-            await d.to_domain()
-            async for d in django_model.objects.filter(test=test)
-        ]
 
     async def get_by_calibration_id(self, calibration_id):
         distance_list = []

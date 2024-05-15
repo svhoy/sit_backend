@@ -110,6 +110,38 @@ async def save_calibration_measurement(
         await duow.commit()
 
 
+async def save_simple_calibration_measurement(
+    command: commands.SaveSimpleCalibrationMeasurement,
+    cmuow: uow.CalibrationMeasurementUnitOfWork,
+):
+    async with cmuow:
+        measurement = distances.CalibrationMeasurements(
+            calibration_id=command.calibration_id,
+            measurement=command.measurement,
+            sequence=command.sequence,
+            device_a=command.devices[0],
+            device_b=command.devices[1],
+            device_c=command.devices[2],
+            time_m21=command.time_m21,
+            time_m31=command.time_m31,
+            time_a21=command.time_a21,
+            time_a31=command.time_a31,
+            time_b21=command.time_b21,
+            time_b31=command.time_b31,
+            time_b_i=command.time_tb_i,
+            time_b_ii=command.time_tb_ii,
+            time_c_i=command.time_tc_i,
+            time_c_ii=command.time_tc_ii,
+            time_round_1=command.time_round_1,
+            time_round_2=command.time_round_2,
+            time_reply_1=command.time_reply_1,
+            time_reply_2=command.time_reply_2,
+            distance=command.distance,
+        )
+        await cmuow.calibration_measurement.add(measurement)
+        await cmuow.commit()
+
+
 async def create_calibration(
     command: commands.CreateCalibration, cuow: uow.CalibrationUnitOfWork
 ):
@@ -174,6 +206,56 @@ async def copie_calibration(
         )
 
 
+async def copie_simple_calibration(
+    command: commands.CopieCalibration,
+    cuow: uow.CalibrationUnitOfWork,
+    cmuow: uow.CalibrationMeasurementUnitOfWork,
+):
+    new_calibration_id: int
+    async with cuow:
+        calibration_dom = await cuow.calibration_repo.get_by_id(
+            domain_id=command.copie_calibration_id
+        )
+        new_calibration = calibration.Calibrations(
+            calibration_type=command.calibration_type,
+            measurement_type=calibration_dom.measurement_type,
+            devices=calibration_dom.devices,
+        )
+        new_calibration.calibration_id = await cuow.calibration_repo.add(
+            new_calibration
+        )
+
+        for cali_distance in calibration_dom.cali_distances:
+            cali_distance.calibration_id = new_calibration.calibration_id
+
+        await cuow.calibration_repo.add_cali_distances(
+            calibration_domain=new_calibration,
+            cali_distances_domains=calibration_dom.cali_distances,
+            copie=True,
+        )
+        new_calibration_id = new_calibration.calibration_id
+
+        await cuow.commit()
+    async with cmuow:
+        await cmuow.calibration_measurement.update_calibration_id(
+            calibration_id=command.copie_calibration_id,
+            new_calibration_id=new_calibration_id,
+        )
+        await cmuow.commit()
+
+    async with cuow:
+        calibration_dom = await cuow.calibration_repo.get_by_id(
+            new_calibration_id
+        )
+        cuow.calibration_repo.seen.add(calibration_dom)
+        calibration_dom.events.append(
+            events.CalibrationCopied(
+                calibration_id=calibration_dom.calibration_id,
+                calibration_type=calibration_dom.calibration_type,
+            )
+        )
+
+
 async def add_calibration_distances(
     command: commands.AddCalibrationDistances, cuow: uow.CalibrationUnitOfWork
 ):
@@ -222,6 +304,7 @@ async def redirect_command(
         | commands.StartDistanceMeasurement
         | commands.StopDistanceMeasurement
         | commands.StartTestMeasurement
+        | commands.StartDebugCalibration
     ),
 ):
     data = command.json
@@ -246,6 +329,9 @@ COMMAND_HANDLER = {
     commands.CreateCalibration: create_calibration,
     commands.AddCalibrationDistances: add_calibration_distances,
     commands.SaveCalibrationMeasurement: save_calibration_measurement,
+    commands.SaveSimpleCalibrationMeasurement: save_simple_calibration_measurement,
     commands.StartCalibrationCalc: start_calibration_calc,
     commands.CopieCalibration: copie_calibration,
+    commands.CopieSimpleCalibration: copie_simple_calibration,
+    commands.StartDebugCalibration: redirect_command,
 }

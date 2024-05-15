@@ -3,6 +3,7 @@ from django.urls import path
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from .views import (
+    AntDelayViewSet,
     CalibrationsDistancesViewSet,
     CalibrationViewSet,
     DeviceTestGroupsViewSet,
@@ -22,6 +23,7 @@ device_detail = UwbDeviceViewSet.as_view(
     }
 )
 device_list = UwbDeviceViewSet.as_view({"get": "list", "post": "create"})
+antdelay_list = AntDelayViewSet.as_view({"get": "list"})
 measurement_list = DistanceMeasurementViewSet.as_view({"get": "list"})
 measurement_delete = DistanceMeasurementViewSet.as_view(
     {
@@ -68,6 +70,7 @@ urlpatterns = format_suffix_patterns(
             device_detail,
             name="device-detail",
         ),
+        path("api/antennadelay/", antdelay_list, name="antdelay-list"),
         path(
             "api/measurement-list/", measurement_list, name="measurement-list"
         ),

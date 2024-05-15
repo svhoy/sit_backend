@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass, field
 from json import dumps
+from msilib import sequence
 
 
 @dataclass
@@ -72,6 +73,18 @@ class MeasurementSaved(Event):
 
 
 @dataclass
+class TestFinished(Event):
+    test_id: int
+
+
+@dataclass
+class CalibrationMeasurementSaved(Event):
+    measurement: int
+    sequence: int
+    devices: list[str] = field(default_factory=list)
+
+
+@dataclass
 class CalibrationCreated(Event):
     calibration_id: int
 
@@ -88,6 +101,17 @@ class CalibrationInitFinished(Event):
 class CalibrationCopied(Event):
     calibration_id: int
     calibration_type: str
+
+
+@dataclass
+class CalibrationSimpleCopied(Event):
+    calibration_id: int
+    calibration_type: str
+
+
+@dataclass
+class CalibrationSimpleMeasurementFinished(Event):
+    calibration_id: int
 
 
 @dataclass

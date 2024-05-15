@@ -25,3 +25,33 @@ class DistanceMeasurement:
         self.fpi_final = kwargs.get("fpi_final", None)
         self.edistance = kwargs.get("edistance", None)
         self.events = []
+
+
+class CalibrationMeasurements:
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        self.measurement_id = kwargs.get("measurement_id", None)
+        self.calibration_id = kwargs.get("calibration_id", [])
+        self.device_a = kwargs.get("device_a", None)
+        self.device_b = kwargs.get("device_b", None)
+        self.device_c = kwargs.get("device_c", None)
+        self.measurement = kwargs.get("measurement", None)
+        self.sequence = kwargs.get("sequence", None)
+        self.time_m21 = kwargs.get("time_m21", None)
+        self.time_m31 = kwargs.get("time_m31", None)
+        self.time_a21 = kwargs.get("time_a21", None)
+        self.time_a31 = kwargs.get("time_a31", None)
+        self.time_b21 = kwargs.get("time_b21", None)
+        self.time_b31 = kwargs.get("time_b31", None)
+        self.time_b_i = kwargs.get("time_b_i", None)
+        self.time_b_ii = kwargs.get("time_b_ii", None)
+        self.time_c_i = kwargs.get("time_c_i", None)
+        self.time_c_ii = kwargs.get("time_c_ii", None)
+        self.time_round_1 = kwargs.get("time_round_1", None)
+        self.time_round_2 = kwargs.get("time_round_2", None)
+        self.time_reply_1 = kwargs.get("time_reply_1", None)
+        self.time_reply_2 = kwargs.get("time_reply_2", None)
+        self.distance = kwargs.get("distance", None)
+        self.events = []
