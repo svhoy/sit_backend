@@ -182,8 +182,8 @@ class StartSimpleCalibrationMeasurement(Command):
     devices: list[str]
     measurement_type: str = "two_device"
     max_measurement: int = 200
-    rx_ant_dly: int = 0
-    tx_ant_dly: int = 0
+    rx_ant_dly: int = 16385
+    tx_ant_dly: int = 16385
 
 
 @dataclass
@@ -192,21 +192,21 @@ class SaveSimpleCalibrationMeasurement(Command):
     sequence: int
     measurement: int
     devices: list[str]
-    time_m21: float
-    time_m31: float
-    time_a21: float
-    time_a31: float
-    time_b21: float
-    time_b31: float
-    time_tc_i: float
-    time_tc_ii: float
-    time_tb_i: float
-    time_tb_ii: float
-    time_round_1: float
-    time_round_2: float
-    time_reply_1: float
-    time_reply_2: float
-    distance: float
+    time_m21: float = 0.0
+    time_m31: float = 0.0
+    time_a21: float = 0.0
+    time_a31: float = 0.0
+    time_b21: float = 0.0
+    time_b31: float = 0.0
+    time_tc_i: float = 0.0
+    time_tc_ii: float = 0.0
+    time_tb_i: float = 0.0
+    time_tb_ii: float = 0.0
+    time_round_1: float = 0.0
+    time_round_2: float = 0.0
+    time_reply_1: float = 0.0
+    time_reply_2: float = 0.0
+    distance: float = 0.0
 
 
 @dataclass

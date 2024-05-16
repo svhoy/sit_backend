@@ -63,7 +63,7 @@ async def send_start_calibration(event: events.CalibrationInitFinished):
         event.measurement_type == "ds_3_twr"
         or event.measurement_type == "ss_twr"
     ):
-        command = commands.StartCalibrationMeasurement(
+        command = commands.StartSimpleCalibrationMeasurement(
             calibration_id=event.calibration_id,
             measurement_type=event.measurement_type,
             devices=event.devices,
