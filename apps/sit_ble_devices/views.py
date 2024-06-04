@@ -89,7 +89,7 @@ class AntDelayViewSet(viewsets.ModelViewSet):
 
     """
 
-    queryset = AntDelay.objects.all().order_by("created")
+    queryset = AntDelay.objects.all().order_by("-created")
     serializer_class = AntDelaySerializer
     permission_classes = [
         permissions.IsAuthenticated,
