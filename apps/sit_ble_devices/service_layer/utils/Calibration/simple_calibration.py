@@ -33,8 +33,20 @@ class SimpleCalibration(SimpleCalibrationBase):
         results = []
         for measurement in self.measurement_list:
             ant_delay = (
-                np.mean(measurement["time_c_i"])
-                - np.mean(measurement["time_b_i"])
+                np.mean(
+                    measurement["time_c_i"],
+                    where=np.logical_and(
+                        self.measurement_list[0]["time_c_i"] > 0,
+                        self.measurement_list[0]["time_c_i"] < 1,
+                    ),
+                )
+                - np.mean(
+                    measurement["time_b_i"],
+                    where=np.logical_and(
+                        self.measurement_list[0]["time_b_i"] > 0,
+                        self.measurement_list[0]["time_b_i"] < 1,
+                    ),
+                )
                 + measurement["real_tof_a_c"]
                 - measurement["real_tof_a_b"]
                 - measurement["real_tof_b_c"]
@@ -59,15 +71,39 @@ class ExtendedCalibration(SimpleCalibrationBase):
             ant_delay = (
                 (
                     (
-                        np.mean(measurement["time_c_i"])
-                        - np.mean(measurement["time_c_ii"])
+                        np.mean(
+                            measurement["time_c_i"],
+                            where=np.logical_and(
+                                self.measurement_list[0]["time_c_i"] > 0,
+                                self.measurement_list[0]["time_c_i"] < 1,
+                            ),
+                        )
+                        - np.mean(
+                            measurement["time_c_i"],
+                            where=np.logical_and(
+                                self.measurement_list[0]["time_c_ii"] > 0,
+                                self.measurement_list[0]["time_c_ii"] < 1,
+                            ),
+                        )
                     )
                     / 2
                 )
                 - (
                     (
-                        np.mean(measurement["time_b_i"])
-                        - np.mean(measurement["time_b_ii"])
+                        np.mean(
+                            measurement["time_b_i"],
+                            where=np.logical_and(
+                                self.measurement_list[0]["time_b_i"] > 0,
+                                self.measurement_list[0]["time_b_i"] < 1,
+                            ),
+                        )
+                        - np.mean(
+                            measurement["time_b_ii"],
+                            where=np.logical_and(
+                                self.measurement_list[0]["time_b_ii"] > 0,
+                                self.measurement_list[0]["time_b_ii"] < 1,
+                            ),
+                        )
                     )
                     / 2
                 )
@@ -86,27 +122,45 @@ class TwoDeviceCalibration(SimpleCalibrationBase):
     async def start_calibration_calc(self):
         time_m21 = np.mean(
             self.measurement_list[0]["time_m21"],
-            where=self.measurement_list[0]["time_m21"] > 0,
+            where=np.logical_and(
+                self.measurement_list[0]["time_m21"] > 0,
+                self.measurement_list[0]["time_m21"] < 1,
+            ),
         )
         time_m31 = np.mean(
             self.measurement_list[0]["time_m31"],
-            where=self.measurement_list[0]["time_m31"] > 0,
+            where=np.logical_and(
+                self.measurement_list[0]["time_m31"] > 0,
+                self.measurement_list[0]["time_m31"] < 1,
+            ),
         )
         time_a21 = np.mean(
             self.measurement_list[0]["time_a21"],
-            where=self.measurement_list[0]["time_a21"] > 0,
+            where=np.logical_and(
+                self.measurement_list[0]["time_a21"] > 0,
+                self.measurement_list[0]["time_a21"] < 1,
+            ),
         )
         time_a31 = np.mean(
             self.measurement_list[0]["time_a31"],
-            where=self.measurement_list[0]["time_a31"] > 0,
+            where=np.logical_and(
+                self.measurement_list[0]["time_a31"] > 0,
+                self.measurement_list[0]["time_a31"] < 1,
+            ),
         )
         time_b21 = np.mean(
             self.measurement_list[0]["time_b21"],
-            where=self.measurement_list[0]["time_b21"] > 0,
+            where=np.logical_and(
+                self.measurement_list[0]["time_b21"] > 0,
+                self.measurement_list[0]["time_b21"] < 1,
+            ),
         )
         time_b31 = np.mean(
             self.measurement_list[0]["time_b31"],
-            where=self.measurement_list[0]["time_b31"] > 0,
+            where=np.logical_and(
+                self.measurement_list[0]["time_b31"] > 0,
+                self.measurement_list[0]["time_b31"] < 1,
+            ),
         )
         ant_delay_a = (
             time_m21
