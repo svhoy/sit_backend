@@ -297,6 +297,33 @@ async def start_calibration_calc(
     logger.info("Starting calibration calculation")
 
 
+async def save_measurement_cache(
+    command: commands.SaveMeasurementCache,
+    duow: uow.DistanceUnitOfWork,
+):
+    async with duow:
+        measurement_list = [
+            distances.DistanceMeasurement(
+                initiator_id=measurement["initiator"],
+                responder_id=measurement["responder"],
+                measurement_type=measurement["measurement_type"],
+                sequence=measurement["sequence"],
+                measurement=measurement["measurement"],
+                distance=measurement["distance"],
+                time_round_1=measurement["time_round_1"],
+                time_round_2=measurement["time_round_2"],
+                time_reply_1=measurement["time_reply_1"],
+                time_reply_2=measurement["time_reply_2"],
+                nlos_final=measurement["nlos"],
+                rssi_final=measurement["rssi"],
+                fpi_final=measurement["fpi"],
+                test_id=measurement["test_id"],
+            )
+            for measurement in command.measurement_list
+        ]
+        await duow.distance_measurement.add_bulk(measurement_list)
+
+
 async def redirect_command(
     command: (
         commands.ConnectBleDevice
@@ -334,4 +361,5 @@ COMMAND_HANDLER = {
     commands.CopieCalibration: copie_calibration,
     commands.CopieSimpleCalibration: copie_simple_calibration,
     commands.StartDebugCalibration: redirect_command,
+    commands.SaveMeasurementCache: save_measurement_cache,
 }

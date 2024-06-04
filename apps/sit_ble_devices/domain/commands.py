@@ -110,6 +110,12 @@ class SaveMesurement(Command):
 
 
 @dataclass
+class SaveMeasurementCollection(Command):
+    uuid: str
+    measurements: list[dict]
+
+
+@dataclass
 class StartTestMeasurement(Command):
     test_id: int
     initiator: str
@@ -144,6 +150,13 @@ class SaveTestMeasurement(Command):
     nlos_final: int
     rssi_final: float
     fpi_final: float
+
+
+@dataclass
+class SaveTestMeasurementCollection(Command):
+    uuid: str
+    test_id: int
+    measurements: list[dict]
 
 
 @dataclass
@@ -182,8 +195,8 @@ class StartSimpleCalibrationMeasurement(Command):
     devices: list[str]
     measurement_type: str = "two_device"
     max_measurement: int = 200
-    rx_ant_dly: int = 16385
-    tx_ant_dly: int = 16385
+    rx_ant_dly: int = 0
+    tx_ant_dly: int = 0
 
 
 @dataclass
@@ -223,3 +236,9 @@ class StartDebugCalibration(Command):
     rx_ant_dly: int = 0
     tx_ant_dly: int = 0
     calibration_type: str = "simple_calibration"
+
+
+@dataclass
+class SaveMeasurementCache(Command):
+    test_id: int
+    measurement_list: list[dict]
