@@ -18,24 +18,18 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install poetry
-      run: |
-        python -m pip install poetry
-    - name: Config Poetry & Install dependencies
-      run: |
-        poetry config virtualenvs.create true 
-        poetry config virtualenvs.in-project true
-    - name: Define a cache for the virtual environment based on the dependencies lock file
-      uses: actions/cache@v3
-      with:
-        path: ./.venv
-        key: venv-${{ hashFiles('poetry.lock') }}
+    - name: Set virtual environment
+      run: echo "VIRTUAL_ENV=${Python_ROOT_DIR}" >> $GITHUB_ENV
+    - name: Install uv
+      run: pip install uv
     - name: Install dependencies
-      run: |
-        poetry install --no-interaction --no-root
+      run: uv pip install -r requirements.txt
     - name: Analysing the code with pylint
       run: |
-        poetry run pylint --load-plugins pylint_django --django-settings-module=config.settings **/*.py
+        pylint $(git ls-files '*.py')
+
+
+
 
   black:
     runs-on: windows-2022
