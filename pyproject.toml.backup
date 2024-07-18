@@ -1,46 +1,48 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
-# uv section
-[project]
-name = "sit_backend"
+# Poetry section
+[tool.poetry]
+name = "sit-backend"
 version = "0.1.0"
 description = ""
-authors = [{ name="Sven Hoyer", email="sven.hoyer@hotmail.com" }]
+authors = ["Sven <sven.hoyer@hotmail.com>"]
 readme = "README.md"
-requires-python = ">3.10"
-dependencies = [
-	"django",
-	"djangorestframework",
-	"channels[daphne]",
-	"djangorestframework-simplejwt",
-	"djangochannelsrestframework",
-	"django-channels-jwt-auth-middleware",
-	"django-filter",
-	"django-cors-headers",
-	"numpy",
-	"channels-redis",
-	"pyswarms",
-	"scipy",
-	"pandas",
-	"matplotlib",
-]
 
-[project.optional-dependencies]
-dev = [
-	"black",
-	"pylint",
-	"mypy",
-	"django-stubs",
-	"pylint-django",
-	"ipykernel",
-]
-test = [
-	"pytest",
-	"pytest-asyncio",
-	"pytest-django",
-]
+[tool.poetry.dependencies]
+python = "^3.10"
+django = "^5.0.1"
+djangorestframework = "^3.15.2"
+channels = {extras = ["daphne"], version = "^4.0.0"}
+djangorestframework-simplejwt = "^5.3.1"
+djangochannelsrestframework = "^1.2.0"
+django-channels-jwt-auth-middleware = "^1.0.0"
+django-filter = "^24.2"
+django-cors-headers = "^4.4.0"
+numpy = "^1.26.3"
+channels-redis = "^4.2.0"
+pyswarms = "^1.3.0"
+scipy = "^1.13.0"
+jupyter = "^1.0.0"
+pandas = "^2.2.2"
+matplotlib = "^3.9.1"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.0"
+pytest-asyncio = "^0.23.3"
+pytest-django = "^4.7.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+pylint = "^3.0.3"
+mypy = "^1.8.0"
+django-stubs = "^5.0.0"
+pylint-django = "^2.5.5"
+ipykernel = "^6.29.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 
 # Style and Linting Configuration
 #black section

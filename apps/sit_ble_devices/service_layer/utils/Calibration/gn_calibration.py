@@ -23,7 +23,6 @@ class GaussNewtonCalibration(CalibrationBase):
                 if self.measurement_type == "adstwr":
                     delay = optimizer.optimize(
                         fit_function=self.objective_gauss_newton_ads_function,
-                        df_function=self.df_gauss_newton_ads_function,
                         initial_guess=np.array([1000e-9]),
                         max_iterations=self.iterations,
                         method="lm",
