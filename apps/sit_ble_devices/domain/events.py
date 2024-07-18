@@ -73,6 +73,12 @@ class MeasurementSaved(Event):
 
 
 @dataclass
+class MeasurementListSaved(Event):
+    test_id: int
+    measurements: int
+
+
+@dataclass
 class TestFinished(Event):
     test_id: int
 

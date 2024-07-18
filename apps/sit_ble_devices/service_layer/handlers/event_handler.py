@@ -63,7 +63,7 @@ async def send_start_calibration(event: events.CalibrationInitFinished):
         event.measurement_type == "ds_3_twr"
         or event.measurement_type == "ss_twr"
     ):
-        command = commands.StartCalibrationMeasurement(
+        command = commands.StartSimpleCalibrationMeasurement(
             calibration_id=event.calibration_id,
             measurement_type=event.measurement_type,
             devices=event.devices,
@@ -179,6 +179,14 @@ async def finished_calibration(
         )
 
 
+async def send_list_saved(event: events.MeasurementListSaved):
+    send_msg = event.json
+    channel_layer = get_channel_layer()
+    await channel_layer.group_send(
+        "sit_1", {"type": "send_event", "data": send_msg}
+    )
+
+
 async def redirect_event(
     event: (
         events.BleDeviceConnectError
@@ -218,4 +226,5 @@ EVENT_HANDLER = {
         send_copied_calibration,
     ],
     events.TestFinished: [redirect_event],
+    events.MeasurementListSaved: [send_list_saved],
 }

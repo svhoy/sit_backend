@@ -60,6 +60,5 @@ class MessageBus:
             self.queue.extend(self.cuow.collect_new_events())
             self.queue.extend(self.uduow.collect_new_events())
             self.queue.extend(self.cmuow.collect_new_events())
-
         except Exception:  # pylint: disable=broad-exception-caught
             logger.error(f"Exception handling command: {command}")

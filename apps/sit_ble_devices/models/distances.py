@@ -100,6 +100,44 @@ class DistanceMeasurement(models.Model):
         await distance_model.asave()
 
     @staticmethod
+    async def from_domain_list(
+        measurements: list[distances.DistanceMeasurement],
+    ):
+        test: DeviceTests = None
+
+        if measurements[0].test_id is not None:
+            test = await DeviceTests.objects.aget(id=measurements[0].test_id)
+
+        domain_list = [
+            DistanceMeasurement(
+                initiator=await UwbDevice.objects.aget(
+                    device_id=measurement.initiator_id
+                ),
+                responder=await UwbDevice.objects.aget(
+                    device_id=measurement.responder_id
+                ),
+                measurement_type=measurement.measurement_type,
+                sequence=measurement.sequence,
+                measurement=measurement.measurement,
+                distance=measurement.distance,
+                time_round_1=measurement.time_round_1,
+                time_round_2=measurement.time_round_2,
+                time_reply_1=measurement.time_reply_1,
+                time_reply_2=measurement.time_reply_2,
+                nlos=measurement.nlos_final,
+                recived_signal_strength_index_final=measurement.rssi_final,
+                first_path_index_final=measurement.fpi_final,
+                error_distance=measurement.distance - test.real_test_distance,
+                test=test,
+            )
+            for measurement in measurements
+        ]
+        try:
+            await DistanceMeasurement.objects.abulk_create(domain_list)
+        except Exception as e:
+            logger.error(f"Error creating distance measurement: {e}")
+
+    @staticmethod
     async def update_from_domain(measurement: distances.DistanceMeasurement):
         calibration = None
         if measurement.test_id is not None:

@@ -110,6 +110,12 @@ class SaveMesurement(Command):
 
 
 @dataclass
+class SaveMeasurementCollection(Command):
+    uuid: str
+    measurements: list[dict]
+
+
+@dataclass
 class StartTestMeasurement(Command):
     test_id: int
     initiator: str
@@ -144,6 +150,13 @@ class SaveTestMeasurement(Command):
     nlos_final: int
     rssi_final: float
     fpi_final: float
+
+
+@dataclass
+class SaveTestMeasurementCollection(Command):
+    uuid: str
+    test_id: int
+    measurements: list[dict]
 
 
 @dataclass
@@ -192,21 +205,21 @@ class SaveSimpleCalibrationMeasurement(Command):
     sequence: int
     measurement: int
     devices: list[str]
-    time_m21: float
-    time_m31: float
-    time_a21: float
-    time_a31: float
-    time_b21: float
-    time_b31: float
-    time_tc_i: float
-    time_tc_ii: float
-    time_tb_i: float
-    time_tb_ii: float
-    time_round_1: float
-    time_round_2: float
-    time_reply_1: float
-    time_reply_2: float
-    distance: float
+    time_m21: float = 0.0
+    time_m31: float = 0.0
+    time_a21: float = 0.0
+    time_a31: float = 0.0
+    time_b21: float = 0.0
+    time_b31: float = 0.0
+    time_tc_i: float = 0.0
+    time_tc_ii: float = 0.0
+    time_tb_i: float = 0.0
+    time_tb_ii: float = 0.0
+    time_round_1: float = 0.0
+    time_round_2: float = 0.0
+    time_reply_1: float = 0.0
+    time_reply_2: float = 0.0
+    distance: float = 0.0
 
 
 @dataclass
@@ -223,3 +236,9 @@ class StartDebugCalibration(Command):
     rx_ant_dly: int = 0
     tx_ant_dly: int = 0
     calibration_type: str = "simple_calibration"
+
+
+@dataclass
+class SaveMeasurementCache(Command):
+    test_id: int
+    measurement_list: list[dict]

@@ -30,6 +30,18 @@ class DistanceMeasurementRepository(AbstractRepository):
     async def update(self, domain_model: distances.DistanceMeasurement):
         await django_model.update_from_domain(measurement=domain_model)
 
+    async def add_bulk(
+        self, domain_models: list[distances.DistanceMeasurement]
+    ):
+        await django_model.from_domain_list(domain_models)
+        await super().add(domain_models[0])
+        domain_models[0].events.append(
+            events.MeasurementListSaved(
+                test_id=domain_models[0].test_id,
+                measurements=len(domain_models),
+            )
+        )
+
     async def update_calibration_id(
         self,
         calibration_id: int,

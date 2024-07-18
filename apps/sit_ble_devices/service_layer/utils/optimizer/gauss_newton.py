@@ -13,7 +13,7 @@ class GaussNewtonOptimizer:
         fit_function: callable,
         initial_guess,
         max_iterations=100,
-        tolerance=1e-9,
+        tolerance=1e-10,
         method="lm",
         *args,
         **kwargs,

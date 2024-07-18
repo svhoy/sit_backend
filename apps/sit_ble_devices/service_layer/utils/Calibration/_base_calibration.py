@@ -119,8 +119,20 @@ class CalibrationBase:
         # Measurements should be a list of every measurement between these two devices.
         # In PSO we take the mean of all measurements and then calculate the estimated
         # Time of Flight before looking how good our candidates are.
-        time_round_1 = measurements["time_round_1"].mean()
-        time_reply_1 = measurements["time_reply_1"].mean()
+        time_round_1 = np.mean(
+            measurements["time_round_1"],
+            where=np.logical_and(
+                measurements["time_round_1"] > 0,
+                measurements["time_round_1"] < 1,
+            ),
+        )
+        time_reply_1 = np.mean(
+            measurements["time_reply_1"],
+            where=np.logical_and(
+                measurements["time_reply_1"] > 0,
+                measurements["time_reply_1"] < 1,
+            ),
+        )
         error_tof = (time_round_1 - time_reply_1 - delay_candidates[:, 0]) / 2
         error_distance = error_tof * SPEED_OF_LIGHT
         time_diff = abs(measurements["real_distance"] - error_distance)
@@ -134,10 +146,34 @@ class CalibrationBase:
         # Measurements should be a list of every measurement between these two devices.
         # In PSO we take the mean of all measurements and then calculate the estimated
         # Time of Flight before looking how good our candidates are.
-        time_round_1 = measurements["time_round_1"].mean()
-        time_round_2 = measurements["time_round_2"].mean()
-        time_reply_1 = measurements["time_reply_1"].mean()
-        time_reply_2 = measurements["time_reply_2"].mean()
+        time_round_1 = np.mean(
+            measurements["time_round_1"],
+            where=np.logical_and(
+                measurements["time_round_1"] > 0,
+                measurements["time_round_1"] < 1,
+            ),
+        )
+        time_reply_1 = np.mean(
+            measurements["time_reply_1"],
+            where=np.logical_and(
+                measurements["time_reply_1"] > 0,
+                measurements["time_reply_1"] < 1,
+            ),
+        )
+        time_round_2 = np.mean(
+            measurements["time_round_2"],
+            where=np.logical_and(
+                measurements["time_round_2"] > 0,
+                measurements["time_round_2"] < 1,
+            ),
+        )
+        time_reply_2 = np.mean(
+            measurements["time_reply_2"],
+            where=np.logical_and(
+                measurements["time_reply_2"] > 0,
+                measurements["time_reply_2"] < 1,
+            ),
+        )
         error_tof = (
             (time_round_1 - time_reply_1)
             + (time_round_2 - time_reply_2)
@@ -155,10 +191,34 @@ class CalibrationBase:
         # Measurements should be a list of every measurement between these two devices.
         # In PSO we take the mean of all measurements and then calculate the estimated
         # Time of Flight before looking how good our candidates are.
-        time_round_1 = measurements["time_round_1"].mean()
-        time_round_2 = measurements["time_round_2"].mean()
-        time_reply_1 = measurements["time_reply_1"].mean()
-        time_reply_2 = measurements["time_reply_2"].mean()
+        time_round_1 = np.mean(
+            measurements["time_round_1"],
+            where=np.logical_and(
+                measurements["time_round_1"] > 0,
+                measurements["time_round_1"] < 1,
+            ),
+        )
+        time_reply_1 = np.mean(
+            measurements["time_reply_1"],
+            where=np.logical_and(
+                measurements["time_reply_1"] > 0,
+                measurements["time_reply_1"] < 1,
+            ),
+        )
+        time_round_2 = np.mean(
+            measurements["time_round_2"],
+            where=np.logical_and(
+                measurements["time_round_2"] > 0,
+                measurements["time_round_2"] < 1,
+            ),
+        )
+        time_reply_2 = np.mean(
+            measurements["time_reply_2"],
+            where=np.logical_and(
+                measurements["time_reply_2"] > 0,
+                measurements["time_reply_2"] < 1,
+            ),
+        )
         error_tof = (
             time_round_1 * time_round_2
             - time_reply_1 * time_reply_2
